@@ -36,8 +36,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import pactify.client.api.plsp.PLSPPacket;
-import pactify.client.api.plsp.PLSPPacketHandler;
+import pactify.client.api.plsp.packet.client.PLSPPacketAbstractCosmeticEquipment;
 import pactify.client.api.plsp.packet.client.PLSPPacketEntityCosmeticEquipment;
 import pactify.client.api.plsp.packet.client.PLSPPacketPlayerCosmeticEquipment;
 
@@ -306,7 +305,7 @@ public class AZPlayerImpl extends AZClientAbstract implements AZPlayer {
     }
 
     private <A, P> void flushCosmeticEquipment(
-        EntityMeta<A, P, ? super PLSPPacket<PLSPPacketHandler.ClientHandler>> meta,
+        EntityMeta<A, P, ? super PLSPPacketAbstractCosmeticEquipment> meta,
         Iterable<? extends @NotNull Player> recipients,
         boolean filterViewers
     ) {
@@ -316,23 +315,19 @@ public class AZPlayerImpl extends AZClientAbstract implements AZPlayer {
             filterViewers,
             PLSPPacketEntityCosmeticEquipment.SINCE_PROTOCOL_VERSION,
             (recipient, ctx, isSelf) -> {
-                PLSPPacket<PLSPPacketHandler.ClientHandler> packet = createCosmeticEquipmentPacket(isSelf);
+                PLSPPacketAbstractCosmeticEquipment packet = createCosmeticEquipmentPacket(isSelf);
                 meta.apply(this, packet, netValue, ctx, isSelf, false);
                 recipient.sendPacket(packet);
             }
         );
     }
 
-    private PLSPPacket<PLSPPacketHandler.ClientHandler> createCosmeticEquipmentPacket(boolean isSelf) {
+    private PLSPPacketAbstractCosmeticEquipment createCosmeticEquipmentPacket(boolean isSelf) {
         if (isSelf) {
             // When sending to self, use UUID bypass the BungeeCord entity ID remapping
-            PLSPPacketPlayerCosmeticEquipment packet = new PLSPPacketPlayerCosmeticEquipment();
-            packet.setPlayerId(bukkitPlayer.getUniqueId());
-            return packet;
+            return new PLSPPacketPlayerCosmeticEquipment(bukkitPlayer.getUniqueId());
         } else {
-            PLSPPacketEntityCosmeticEquipment packet = new PLSPPacketEntityCosmeticEquipment();
-            packet.setEntityId(getBukkitEntity().getEntityId());
-            return packet;
+            return new PLSPPacketEntityCosmeticEquipment(getBukkitEntity().getEntityId());
         }
     }
 
@@ -377,7 +372,7 @@ public class AZPlayerImpl extends AZClientAbstract implements AZPlayer {
                 flushAllMetadataInternal(recipients, onTrackBegin, (recipient, ctx, isSelf) -> {
                     cosmeticEquipments.forEach((key, value) -> {
                         EntityMetaCosmeticEquipment meta = cosmeticEquipmentsMeta.get(key);
-                        PLSPPacket<PLSPPacketHandler.ClientHandler> packet = createCosmeticEquipmentPacket(isSelf);
+                        PLSPPacketAbstractCosmeticEquipment packet = createCosmeticEquipmentPacket(isSelf);
                         if (meta.apply(self(), packet, value, ctx, isSelf, onTrackBegin)) {
                             recipient.sendPacket(packet);
                         }

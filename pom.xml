@@ -46,7 +46,7 @@
     <lombok.version>1.18.36</lombok.version>
     <jetbrains-annotations.version>26.0.1</jetbrains-annotations.version>
     <asm.version>9.7.1</asm.version>
-    <plsp-protocol.version>20250111</plsp-protocol.version>
+    <plsp-protocol.version>20250114</plsp-protocol.version>
   </properties>
 
   <repositories>

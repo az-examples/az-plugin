@@ -6,7 +6,6 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import pactify.client.api.mcprotocol.NotchianPacketBuffer;
 import pactify.client.api.mcprotocol.model.NotchianItemStack;
 import pactify.client.api.mcprotocol.model.NotchianNbtTagCompound;
 
@@ -31,26 +30,33 @@ public interface AZBukkitItemStack extends NotchianItemStack, NotchianItemStackL
     ItemStack getBukkitItemStack();
 
     @Override
-    default void write(NotchianPacketBuffer buf) {
-        ItemStack itemStack = getBukkitItemStack();
-        if (itemStack.getTypeId() <= 0) {
-            buf.writeShort(-1);
-        } else {
-            buf.writeShort(itemStack.getTypeId());
-            buf.writeByte(itemStack.getAmount());
-            buf.writeShort(itemStack.getDurability());
-            NotchianNbtTagCompound tag = AZBukkit.platform().getItemStackTag(itemStack);
-            buf.writeNotchianNbtTagCompound(tag);
-        }
+    default int getItemId() {
+        return getBukkitItemStack().getTypeId();
     }
 
     @Override
-    default AZBukkitItemStack shallowClone() {
+    default int getCount() {
+        return getBukkitItemStack().getAmount();
+    }
+
+    @Override
+    default int getDamage() {
+        return getBukkitItemStack().getDurability();
+    }
+
+    @Override
+    @Nullable
+    default NotchianNbtTagCompound getTag() {
+        return AZBukkit.platform().getItemStackTag(getBukkitItemStack());
+    }
+
+    @Override
+    default @NotNull AZBukkitItemStack shallowClone() {
         return mirrorOf(getBukkitItemStack());
     }
 
     @Override
-    default AZBukkitItemStack deepClone() {
+    default @NotNull AZBukkitItemStack deepClone() {
         return copyOf(getBukkitItemStack());
     }
 

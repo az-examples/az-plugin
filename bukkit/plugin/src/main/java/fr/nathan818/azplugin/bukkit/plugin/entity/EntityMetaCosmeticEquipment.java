@@ -7,8 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import pactify.client.api.plprotocol.model.cosmetic.PactifyCosmeticEquipment;
 import pactify.client.api.plprotocol.model.cosmetic.PactifyCosmeticEquipmentSlot;
 import pactify.client.api.plprotocol.model.cosmetic.PactifyCosmeticEquipmentSymbol;
-import pactify.client.api.plsp.PLSPPacket;
-import pactify.client.api.plsp.PLSPPacketHandler;
+import pactify.client.api.plsp.packet.client.PLSPPacketAbstractCosmeticEquipment;
 import pactify.client.api.plsp.packet.client.PLSPPacketEntityCosmeticEquipment;
 import pactify.client.api.plsp.packet.client.PLSPPacketPlayerCosmeticEquipment;
 
@@ -17,7 +16,7 @@ final class EntityMetaCosmeticEquipment
     extends EntityMeta<
         AZCosmeticEquipment,
         pactify.client.api.plprotocol.model.cosmetic.PactifyCosmeticEquipment,
-        PLSPPacket<PLSPPacketHandler.ClientHandler>
+        PLSPPacketAbstractCosmeticEquipment
     > {
 
     private final PactifyCosmeticEquipmentSlot slot;
@@ -50,7 +49,7 @@ final class EntityMetaCosmeticEquipment
 
     @Override
     public void applyToPacket(
-        @NotNull PLSPPacket<PLSPPacketHandler.ClientHandler> packet,
+        @NotNull PLSPPacketAbstractCosmeticEquipment packet,
         @Nullable PactifyCosmeticEquipment value
     ) {
         if (packet instanceof PLSPPacketPlayerCosmeticEquipment) {

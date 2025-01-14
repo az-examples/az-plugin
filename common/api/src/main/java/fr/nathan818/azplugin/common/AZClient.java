@@ -322,16 +322,20 @@ public interface AZClient {
     default boolean setChatBehavior(@NotNull Iterable<? extends AZChatBehavior> behaviors) {
         List<PLSPPacketChatBehavior> packets = new ArrayList<>();
         for (AZChatBehavior behavior : behaviors) {
-            packets.add(
-                new PLSPPacketChatBehavior(
-                    behavior.isSet() ? PLSPPacketChatBehavior.Action.ADD : PLSPPacketChatBehavior.Action.REMOVE,
-                    behavior.getId(),
-                    behavior.getPattern(),
-                    behavior.getMessage(),
-                    behavior.getTagColor(),
-                    behavior.getPriority()
-                )
-            );
+            if (behavior.isSet()) {
+                packets.add(
+                    new PLSPPacketChatBehavior(
+                        PLSPPacketChatBehavior.Action.ADD,
+                        behavior.getId(),
+                        behavior.getPattern(),
+                        behavior.getMessage(),
+                        behavior.getTagColor(),
+                        behavior.getPriority()
+                    )
+                );
+            } else {
+                packets.add(new PLSPPacketChatBehavior(PLSPPacketChatBehavior.Action.REMOVE, behavior.getId()));
+            }
         }
         switch (packets.size()) {
             case 0:
@@ -344,9 +348,7 @@ public interface AZClient {
     }
 
     default boolean removeChatBehaviors() {
-        return sendPacket(
-            new PLSPPacketChatBehavior(PLSPPacketChatBehavior.Action.REMOVE_ALL, null, null, null, null, (short) 0)
-        );
+        return sendPacket(new PLSPPacketChatBehavior(PLSPPacketChatBehavior.Action.REMOVE_ALL));
     }
 
     default boolean openPopup(@NotNull AZPopupAlert alert) {

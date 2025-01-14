@@ -45,6 +45,18 @@ public class NettyPacketBufferImpl extends AZPacketBufferAbstract implements Net
     }
 
     @Override
+    public AZPacketBuffer markReaderIndex() {
+        nettyBuffer.markReaderIndex();
+        return this;
+    }
+
+    @Override
+    public AZPacketBuffer resetReaderIndex() {
+        nettyBuffer.resetReaderIndex();
+        return this;
+    }
+
+    @Override
     public AZPacketBuffer writeBytes(byte[] src) {
         nettyBuffer.writeBytes(src);
         return this;
