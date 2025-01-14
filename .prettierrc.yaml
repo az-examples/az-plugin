@@ -1,0 +1,15 @@
+---
+printWidth: 120
+trailingComma: 'es5'
+singleQuote: true
+jsxSingleQuote: true
+bracketSpacing: false
+proseWrap: 'always'
+overrides:
+  - files: '*.md'
+    options: {printWidth: 80}
+  - files: '*.java'
+    options: {tabWidth: 4}
+plugins:
+  - '.cache/node_modules/@prettier/plugin-xml/src/plugin.js'
+  - '.cache/node_modules/prettier-plugin-java/dist/index.js'

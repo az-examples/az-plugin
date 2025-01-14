@@ -1,0 +1,4 @@
+name: AZBungeePatch
+main: fr.nathan818.azplugin.bungee.patch.AZBungeePatchPlugin
+version: ${describe}
+author: nathan818

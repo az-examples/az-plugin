@@ -1,0 +1,5 @@
+name: AZPlugin
+main: fr.nathan818.azplugin.bukkit.plugin.AZPlugin
+version: ${describe}
+author: nathan818
+load: STARTUP

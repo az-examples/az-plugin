@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>fr.nathan818.az-plugin</groupId>
+    <artifactId>az-plugin-common-parent</artifactId>
+    <version>dev-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+  <artifactId>az-plugin-common-api</artifactId>
+
+  <properties>
+    <scriptus.scmDirectory>../../</scriptus.scmDirectory>
+  </properties>
+
+  <dependencies>
+    <!-- AZPlugin dependencies -->
+    <dependency>
+      <groupId>nz.az-launcher</groupId>
+      <artifactId>plsp-protocol</artifactId>
+      <scope>compile</scope>
+    </dependency>
+  </dependencies>
+</project>

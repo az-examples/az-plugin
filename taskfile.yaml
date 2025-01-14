@@ -1,0 +1,38 @@
+---
+# $schema: https://taskfile.dev/schema.json
+version: '3'
+
+dotenv:
+  - .env
+
+tasks:
+  default: task -l
+
+  clean:
+    desc: Clean development environment
+    cmds:
+      - 'rm -rf .cache'
+
+  setup:
+    desc: Setup development environment
+    cmds:
+      - 'npm install --prefix .cache prettier@^3 @prettier/plugin-xml@^3.4 prettier-plugin-java@^2.6'
+
+  exec:
+    desc: Execute a command with development environment
+    cmds:
+      - 'env PATH={{(joinPath .ROOT_DIR ".cache" "node_modules" ".bin")|q}}":$PATH" {{.CLI_ARGS}}'
+
+  format:
+    desc: Format files
+    cmds:
+      - task: exec
+        vars:
+          CLI_ARGS: 'prettier --write .'
+
+  lint:
+    desc: Check for formatting errors
+    cmds:
+      - task: exec
+        vars:
+          CLI_ARGS: 'prettier --check .'
