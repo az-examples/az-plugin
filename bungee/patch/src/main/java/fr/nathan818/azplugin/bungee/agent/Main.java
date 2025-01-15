@@ -9,10 +9,12 @@ public class Main {
 
     public static void premain(String agentArgs, Instrumentation inst) {
         try {
+            PluginSupport.markAgentInjected(Main.class);
             Agent agent = new Agent();
             LoadPluginsHook.register(agent, n -> n.equals("net/md_5/bungee/api/plugin/PluginManager"));
             PacketTransformers.register(agent);
             inst.addTransformer(agent);
+            PluginSupport.markAgentLoaded(Main.class);
         } catch (Throwable ex) {
             throw PluginSupport.handleFatalError(ex);
         }

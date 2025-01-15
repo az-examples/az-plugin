@@ -3,6 +3,9 @@ package fr.nathan818.azplugin.common.utils.agent;
 import static fr.nathan818.azplugin.common.AZPlatform.log;
 
 import fr.nathan818.azplugin.common.utils.JvmMagic;
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.management.RuntimeMXBean;
@@ -18,8 +21,13 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class PluginSupport {
 
+    private static final PrintStream systemErr;
     private static boolean agentLoaded = false;
     private static Class<?> agentMainClass;
+
+    static {
+        systemErr = new PrintStream(new FileOutputStream(FileDescriptor.err));
+    }
 
     public static synchronized boolean markAgentInjected(Class<?> agentMainClass) {
         if (PluginSupport.agentMainClass != null) {
@@ -56,16 +64,22 @@ public class PluginSupport {
         }
         if (JvmMagic.clearShutdownHooks()) {
             message += "\n\nExiting...";
-            System.err.println(message);
-            System.exit(1); // Exit now to prevent damage to the server if custom blocks/items are not registered
+            systemErr.println(message);
+            systemErr.flush();
+            doShutdown(); // Exit now to prevent damage to the server if custom blocks/items are not registered
         } else {
             message += "\n\n";
-            System.err.println(message);
+            systemErr.println(message);
+            systemErr.flush();
             if (alternativeShutdown != null) {
                 alternativeShutdown.run();
             }
         }
         throw Lombok.sneakyThrow(exception);
+    }
+
+    public static void doShutdown() {
+        System.exit(88);
     }
 
     private static boolean isBadCommandException(Throwable exception) {

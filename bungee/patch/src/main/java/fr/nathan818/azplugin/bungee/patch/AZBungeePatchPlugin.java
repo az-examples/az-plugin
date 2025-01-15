@@ -15,7 +15,7 @@ public class AZBungeePatchPlugin extends Plugin {
             PluginSupport.assertAgentLoaded(Main.class);
             log(Level.INFO, "Loaded!");
         } catch (Throwable ex) {
-            throw PluginSupport.handleFatalError(ex);
+            throw PluginSupport.handleFatalError(ex, PluginSupport::doShutdown);
         }
     }
 
