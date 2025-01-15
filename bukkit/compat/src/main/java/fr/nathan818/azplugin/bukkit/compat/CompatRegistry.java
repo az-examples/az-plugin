@@ -1,10 +1,9 @@
 package fr.nathan818.azplugin.bukkit.compat;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,10 +42,15 @@ public class CompatRegistry {
     }
 
     public static List<String> getAgentCompatClasses() {
-        return KNOWN_COMPATS.stream()
-            .map(entry -> guessAgentCompatClass(entry.compatClass))
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+        List<String> agentCompatClasses = new ArrayList<>();
+        agentCompatClasses.add("fr.nathan818.azplugin.bukkit.compat.agent.BukkitAgentCompat");
+        for (CompatEntry knownCompat : KNOWN_COMPATS) {
+            String agentCompatClass = guessAgentCompatClass(knownCompat.compatClass);
+            if (agentCompatClass != null) {
+                agentCompatClasses.add(agentCompatClass);
+            }
+        }
+        return agentCompatClasses;
     }
 
     private static @Nullable String guessAgentCompatClass(@Nullable String compatClass) {

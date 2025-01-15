@@ -1,12 +1,12 @@
 package fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent;
 
-import static fr.nathan818.azplugin.bukkit.compat.agent.BukkitAgentUtil.registerChatPacketTransformer;
-import static fr.nathan818.azplugin.bukkit.compat.agent.BukkitAgentUtil.registerCraftField;
-import static fr.nathan818.azplugin.bukkit.compat.agent.BukkitAgentUtil.registerGetItemStackHandle;
-import static fr.nathan818.azplugin.bukkit.compat.agent.BukkitAgentUtil.registerMaterialEnumTransformer;
+import static fr.nathan818.azplugin.bukkit.compat.agent.ChatPacketTransformers.registerChatPacketTransformer;
+import static fr.nathan818.azplugin.bukkit.compat.agent.CraftBukkitTransformers.registerCraftField;
+import static fr.nathan818.azplugin.bukkit.compat.agent.CraftBukkitTransformers.registerGetItemStackHandle;
+import static fr.nathan818.azplugin.bukkit.compat.agent.EntityScaleTransformers.registerEntityScaleTransformer;
+import static fr.nathan818.azplugin.bukkit.compat.agent.NMSMaterialTransformers.registerNMSMaterialTransformer;
 import static fr.nathan818.azplugin.bukkit.compat.material.NMSMaterialDefinitions.ARMOR_MATERIALS;
 import static fr.nathan818.azplugin.bukkit.compat.material.NMSMaterialDefinitions.TOOL_MATERIALS;
-import static fr.nathan818.azplugin.common.AZPlatform.log;
 
 import fr.nathan818.azplugin.bukkit.compat.material.NMSArmorMaterialDefinition;
 import fr.nathan818.azplugin.bukkit.compat.material.NMSToolMaterialDefinition;
@@ -15,8 +15,6 @@ import fr.nathan818.azplugin.common.utils.asm.ASMUtil;
 import fr.nathan818.azplugin.common.utils.asm.AddEnumConstantTransformer;
 import fr.nathan818.azplugin.common.utils.asm.ClassRewriter;
 import java.util.Locale;
-import java.util.logging.Level;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Opcodes;
@@ -24,26 +22,32 @@ import org.objectweb.asm.Type;
 
 public class BukkitAgentCompat1_9_R2 {
 
+    public static final String COMPAT_BRIDGE1_9_R2 =
+        "fr/nathan818/azplugin/bukkit/compat/v1_9_R2/agent/CompatBridge1_9_R2";
+
     public static void register(Agent agent) {
-        String compatBridge = "fr/nathan818/azplugin/bukkit/compat/v1_9_R2/agent/CompatBridge1_9_R2";
-        registerGetItemStackHandle(agent, compatBridge, "org/bukkit/craftbukkit/v1_9_R2/inventory/CraftItemStack");
+        registerGetItemStackHandle(
+            agent,
+            COMPAT_BRIDGE1_9_R2,
+            "org/bukkit/craftbukkit/v1_9_R2/inventory/CraftItemStack"
+        );
         registerCraftField(
             agent,
-            compatBridge,
+            COMPAT_BRIDGE1_9_R2,
             "getAZEntity",
             "setAZEntity",
             "org/bukkit/craftbukkit/v1_9_R2/entity/CraftEntity",
             "azEntity"
         );
         registerChatPacketTransformer(agent, "net/minecraft/server/v1_9_R2/PacketPlayInChat", 100, 3, 3);
-        registerMaterialEnumTransformer(
+        registerNMSMaterialTransformer(
             agent,
             "net/minecraft/server/v1_9_R2/Item$EnumToolMaterial",
             BukkitAgentCompat1_9_R2::initEnumToolMaterial,
             TOOL_MATERIALS,
             false
         );
-        registerMaterialEnumTransformer(
+        registerNMSMaterialTransformer(
             agent,
             "net/minecraft/server/v1_9_R2/ItemArmor$EnumArmorMaterial",
             BukkitAgentCompat1_9_R2::initEnumArmorMaterial,
@@ -54,11 +58,12 @@ public class BukkitAgentCompat1_9_R2 {
             "net/minecraft/server/v1_9_R2/ItemAxe",
             BukkitAgentCompat1_9_R2::removeFinalFromStaticFields
         );
-        agent.addTransformer(
-            "net/minecraft/server/v1_9_R2/EntityTrackerEntry",
-            BukkitAgentCompat1_9_R2::insertEntityTrackEventCalls
-        );
-        EntityScaleTransformer1_9_R2.register(agent, compatBridge);
+        EntityTrackEventTransformers1_9_R2.register(agent);
+        registerEntityScaleTransformer(agent, opts -> {
+            opts.compatBridgeClass(COMPAT_BRIDGE1_9_R2);
+            opts.nmsEntityClass("net/minecraft/server/v1_9_R2/Entity");
+            opts.craftEntityClass("org/bukkit/craftbukkit/v1_9_R2/entity/CraftEntity");
+        });
     }
 
     private static AddEnumConstantTransformer.InitializerGenerator initEnumToolMaterial(
@@ -141,19 +146,6 @@ public class BukkitAgentCompat1_9_R2 {
                 }
             }
         );
-        return crw.getBytes();
-    }
-
-    private static byte[] insertEntityTrackEventCalls(ClassLoader loader, String className, byte[] bytes) {
-        ClassRewriter crw = new ClassRewriter(loader, bytes);
-        EntityTrackEventClassTransformer1_9_R2 tr = crw.rewrite(
-            EntityTrackEventClassTransformer1_9_R2::new,
-            ClassRewriter.DEFAULT_PARSING_OPTIONS | ClassReader.EXPAND_FRAMES,
-            ClassRewriter.DEFAULT_WRITER_FLAGS
-        );
-        if (tr.isInserted()) {
-            log(Level.INFO, "Successfully inserted EntityTrackBeginEvent calls in {0}", className);
-        }
         return crw.getBytes();
     }
 }

@@ -1,16 +1,16 @@
 package fr.nathan818.azplugin.bukkit.compat.agent;
 
 import static fr.nathan818.azplugin.bukkit.compat.material.BukkitMaterialDefinitions.MATERIALS;
-import static fr.nathan818.azplugin.common.AZPlatform.log;
+import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.asMethod;
+import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.createConstructor;
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.defineConstantGetter;
+import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.generateMethod;
 
 import fr.nathan818.azplugin.bukkit.compat.material.BukkitMaterialDefinition;
 import fr.nathan818.azplugin.common.utils.agent.Agent;
-import fr.nathan818.azplugin.common.utils.asm.ASMUtil;
 import fr.nathan818.azplugin.common.utils.asm.AddEnumConstantTransformer;
 import fr.nathan818.azplugin.common.utils.asm.AgentClassWriter;
 import fr.nathan818.azplugin.common.utils.asm.ClassRewriter;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -21,10 +21,10 @@ import org.objectweb.asm.commons.Method;
 /**
  * Transforms the {@code org.bukkit.Material} enum to add AZ Launcher custom materials.
  */
-class BukkitMaterialTransformers {
+public class BukkitMaterialTransformers {
 
     private static final Type BUKKIT_MATERIAL_TYPE = Type.getObjectType("org/bukkit/Material");
-    private static final Method MATERIAL_SUBCLASS_CONSTRUCTOR = ASMUtil.createConstructor(
+    private static final Method MATERIAL_SUBCLASS_CONSTRUCTOR = createConstructor(
         Type.getType(String.class), // enum name
         Type.INT_TYPE, // enum ordinal
         Type.INT_TYPE, // id
@@ -64,7 +64,6 @@ class BukkitMaterialTransformers {
                     .collect(Collectors.toList())
             )
         );
-        log(Level.INFO, "Successfully inserted new enum values into {0}", className);
         return crw.getBytes();
     }
 
@@ -82,10 +81,10 @@ class BukkitMaterialTransformers {
         );
 
         // Define constructor (calls super)
-        GeneratorAdapter mg = ASMUtil.generateMethod(cw, Opcodes.ACC_PUBLIC, MATERIAL_SUBCLASS_CONSTRUCTOR);
+        GeneratorAdapter mg = generateMethod(cw, Opcodes.ACC_PUBLIC, MATERIAL_SUBCLASS_CONSTRUCTOR);
         mg.loadThis();
         mg.loadArgs();
-        mg.invokeConstructor(BUKKIT_MATERIAL_TYPE, ASMUtil.asMethod(mg));
+        mg.invokeConstructor(BUKKIT_MATERIAL_TYPE, asMethod(mg));
         mg.returnValue();
         mg.endMethod();
 

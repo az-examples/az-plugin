@@ -47,10 +47,11 @@ public final class ClassRewriter {
         int parsingOptions,
         int writerFlags
     ) {
-        ClassWriter cw = new AgentClassWriter(loader, writerFlags);
+        AgentClassWriter cw = new AgentClassWriter(loader, writerFlags);
         T cv = constructor.create(api, cw);
         getReader().accept(cv, parsingOptions);
         setBytes(cw.toByteArray());
+        cw.flushMessages();
         return cv;
     }
 
@@ -74,6 +75,6 @@ public final class ClassRewriter {
 
     @FunctionalInterface
     public interface ClassVisitorWriteConstructor<T extends ClassVisitor> {
-        T create(int api, ClassVisitor visitor);
+        T create(int api, AgentClassWriter visitor);
     }
 }

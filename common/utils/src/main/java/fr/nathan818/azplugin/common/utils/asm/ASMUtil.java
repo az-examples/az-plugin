@@ -74,6 +74,22 @@ public class ASMUtil {
         );
     }
 
+    public static GeneratorAdapter generateMethod(
+        ClassVisitor cv,
+        int access,
+        String name,
+        String descriptor,
+        String signature,
+        String[] exceptions
+    ) {
+        return new GeneratorAdapter(
+            cv.visitMethod(access, name, descriptor, signature, exceptions),
+            access,
+            name,
+            descriptor
+        );
+    }
+
     public static Method asMethod(GeneratorAdapter mg) {
         return new Method(mg.getName(), mg.getReturnType(), mg.getArgumentTypes());
     }

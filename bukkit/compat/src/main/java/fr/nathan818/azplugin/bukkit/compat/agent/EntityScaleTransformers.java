@@ -1,10 +1,14 @@
-package fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent;
+package fr.nathan818.azplugin.bukkit.compat.agent;
 
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.NO_ARGS;
+import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.generateMethod;
+import static fr.nathan818.azplugin.common.utils.asm.AgentClassWriter.addInfo;
 
 import fr.nathan818.azplugin.common.utils.agent.Agent;
-import fr.nathan818.azplugin.common.utils.asm.ASMUtil;
 import fr.nathan818.azplugin.common.utils.asm.ClassRewriter;
+import java.util.function.Consumer;
+import lombok.Getter;
+import lombok.NonNull;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
@@ -14,20 +18,26 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 
-class EntityScaleTransformer1_9_R2 {
+public class EntityScaleTransformers {
 
-    public static void register(Agent agent, String compatBridge) {
-        // TODO: Clean & made it generic to use with 1_8_R3
-        agent.addTransformer(compatBridge, EntityScaleTransformer1_9_R2::transformBridge);
-        agent.addTransformer("net/minecraft/server/v1_9_R2/Entity", EntityScaleTransformer1_9_R2::transformEntity);
+    public static void registerEntityScaleTransformer(Agent agent, Consumer<? super Options.Builder> optionsConsumer) {
+        Options.Builder builder = Options.builder();
+        optionsConsumer.accept(builder);
+        Options opts = builder.build();
+
+        agent.addTransformer(opts.getCompatBridgeClass(), (loader, className, bytes) ->
+            transformBridge(loader, className, bytes, opts)
+        );
+        agent.addTransformer(opts.getNmsEntityClass(), (loader, className, bytes) ->
+            transformEntityBase(loader, className, bytes, opts)
+        );
         agent.addTransformer(
-            n ->
-                n.startsWith("net/minecraft/server/v1_9_R2/Entity") && !n.equals("net/minecraft/server/v1_9_R2/Entity"),
-            EntityScaleTransformer1_9_R2::remapGetHeadHeight
+            n -> n.startsWith(opts.getNmsEntityClass()) && !n.equals(opts.getNmsEntityClass()),
+            (loader, className, bytes) -> transformEntitySubclass(loader, className, bytes, opts)
         );
     }
 
-    private static byte[] transformBridge(ClassLoader loader, String className, byte[] bytes) {
+    private static byte[] transformBridge(ClassLoader loader, String className, byte[] bytes, Options opts) {
         ClassRewriter crw = new ClassRewriter(loader, bytes);
         crw.rewrite((api, cv) ->
             new ClassVisitor(api, cv) {
@@ -39,34 +49,36 @@ class EntityScaleTransformer1_9_R2 {
                     String signature,
                     String[] exceptions
                 ) {
-                    MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
                     if ("setBboxScale".equals(name)) {
-                        GeneratorAdapter mg = new GeneratorAdapter(mv, access, name, descriptor);
-                        // arg0.getHandle().setBboxScale(arg1, arg2);
+                        // public void setBboxScale(org.bukkit.entity.Entity arg0, float arg1, float arg2) {
+                        //   arg0.getHandle().setBboxScale(arg1, arg2);
+                        // }
+                        GeneratorAdapter mg = generateMethod(cv, access, name, descriptor, signature, exceptions);
                         mg.loadArg(0);
                         mg.invokeVirtual(
-                            Type.getObjectType("org/bukkit/craftbukkit/v1_9_R2/entity/CraftEntity"),
-                            new Method("getHandle", "()Lnet/minecraft/server/v1_9_R2/Entity;")
+                            Type.getObjectType(opts.getCraftEntityClass()),
+                            new Method("getHandle", Type.getObjectType(opts.getNmsEntityClass()), NO_ARGS)
                         );
                         mg.loadArg(1);
                         mg.loadArg(2);
                         mg.invokeVirtual(
-                            Type.getObjectType("net/minecraft/server/v1_9_R2/Entity"),
+                            Type.getObjectType(opts.getNmsEntityClass()),
                             new Method("setBboxScale", "(FF)V")
                         );
                         mg.returnValue();
                         mg.endMethod();
+                        addInfo(cv, className, "Defined setBboxScale method");
                         return mg;
                     }
-                    return mv;
+                    return super.visitMethod(access, name, descriptor, signature, exceptions);
                 }
             }
         );
         return crw.getBytes();
     }
 
-    private static byte[] transformEntity(ClassLoader loader, String className, byte[] bytes) {
-        ClassRewriter crw = new ClassRewriter(loader, remapGetHeadHeight(loader, className, bytes));
+    private static byte[] transformEntityBase(ClassLoader loader, String className, byte[] bytes, Options opts) {
+        ClassRewriter crw = new ClassRewriter(loader, transformEntitySubclass(loader, className, bytes, opts));
         crw.rewrite(
             (api, cv) ->
                 new ClassVisitor(api, cv) {
@@ -79,6 +91,7 @@ class EntityScaleTransformer1_9_R2 {
                         String[] exceptions
                     ) {
                         if ("setSize".equals(name) && "(FF)V".equals(descriptor)) {
+                            // Rename setSize to setSizeScaled
                             return super.visitMethod(access, "setSizeScaled", descriptor, signature, exceptions);
                         }
                         return super.visitMethod(access, name, descriptor, signature, exceptions);
@@ -92,25 +105,31 @@ class EntityScaleTransformer1_9_R2 {
                         visitField(Opcodes.ACC_PUBLIC, "unscaledWidth", "F", null, 0.6F).visitEnd();
                         visitField(Opcodes.ACC_PUBLIC, "unscaledLength", "F", null, 1.8F).visitEnd();
 
-                        GeneratorAdapter mg = ASMUtil.generateMethod(
+                        // public void setSize(float arg0, float arg1) {
+                        //   this.unscaledWidth = arg0;
+                        //   this.unscaledLength = arg1;
+                        //   if (!bboxScaled) {
+                        //     this.setSizeScaled(arg0, arg1);
+                        //   } else {
+                        //     this.setSizeScaled(arg0 * this.bboxScaleWidth, arg1 * this.bboxScaleLength);
+                        //   }
+                        // }
+                        GeneratorAdapter mg = generateMethod(
                             cv,
                             Opcodes.ACC_PUBLIC,
                             "setSize",
                             Type.VOID_TYPE,
                             new Type[] { Type.FLOAT_TYPE, Type.FLOAT_TYPE }
                         );
-                        // this.unscaledWidth = arg0;
+
                         mg.loadThis();
                         mg.loadArg(0);
                         mg.putField(Type.getObjectType(className), "unscaledWidth", Type.FLOAT_TYPE);
-                        // this.unscaledLength = arg1;
+
                         mg.loadThis();
                         mg.loadArg(1);
                         mg.putField(Type.getObjectType(className), "unscaledLength", Type.FLOAT_TYPE);
-                        // if (!bboxScaled)
-                        //   this.setSizeScaled(arg0, arg1);
-                        // else
-                        //   this.setSizeScaled(arg0 * this.bboxScaleWidth, arg1 * this.bboxScaleLength);
+
                         Label elseLabel = mg.newLabel();
                         mg.loadThis();
                         mg.getField(Type.getObjectType(className), "bboxScaled", Type.BOOLEAN_TYPE);
@@ -131,17 +150,24 @@ class EntityScaleTransformer1_9_R2 {
                         mg.getField(Type.getObjectType(className), "bboxScaleLength", Type.FLOAT_TYPE);
                         mg.visitInsn(Opcodes.FMUL);
                         mg.invokeVirtual(Type.getObjectType(className), new Method("setSizeScaled", "(FF)V"));
+
                         mg.returnValue();
                         mg.endMethod();
 
-                        mg = ASMUtil.generateMethod(
+                        // public void setBboxScale(float arg0, float arg1) {
+                        //   this.bboxScaled = arg0 != 1.0F || arg1 != 1.0F;
+                        //   this.bboxScaleWidth = arg0;
+                        //   this.bboxScaleLength = arg1;
+                        //   this.setSizeScaled(this.unscaledWidth * arg0, this.unscaledLength * arg1);
+                        // }
+                        mg = generateMethod(
                             cv,
                             Opcodes.ACC_PUBLIC,
                             "setBboxScale",
                             Type.VOID_TYPE,
                             new Type[] { Type.FLOAT_TYPE, Type.FLOAT_TYPE }
                         );
-                        // this.bboxScaled = arg0 != 1.0F || arg1 != 1.0F;
+
                         mg.loadThis();
                         Label elseLabel2 = mg.newLabel();
                         mg.loadArg(0);
@@ -157,15 +183,15 @@ class EntityScaleTransformer1_9_R2 {
                         mg.push(true);
                         mg.mark(endLabel);
                         mg.putField(Type.getObjectType(className), "bboxScaled", Type.BOOLEAN_TYPE);
-                        // this.bboxScaleWidth = arg0;
+
                         mg.loadThis();
                         mg.loadArg(0);
                         mg.putField(Type.getObjectType(className), "bboxScaleWidth", Type.FLOAT_TYPE);
-                        // this.bboxScaleLength = arg1;
+
                         mg.loadThis();
                         mg.loadArg(1);
                         mg.putField(Type.getObjectType(className), "bboxScaleLength", Type.FLOAT_TYPE);
-                        // this.setSizeScaled(this.unscaledWidth * arg0, this.unscaledLength * arg1);
+
                         mg.loadThis();
                         mg.loadThis();
                         mg.getField(Type.getObjectType(className), "unscaledWidth", Type.FLOAT_TYPE);
@@ -176,15 +202,18 @@ class EntityScaleTransformer1_9_R2 {
                         mg.loadArg(1);
                         mg.visitInsn(Opcodes.FMUL);
                         mg.invokeVirtual(Type.getObjectType(className), new Method("setSizeScaled", "(FF)V"));
+
                         mg.returnValue();
                         mg.endMethod();
 
-                        mg = ASMUtil.generateMethod(cv, Opcodes.ACC_PUBLIC, "getHeadHeight", Type.FLOAT_TYPE, NO_ARGS);
-                        // return CompatBridge.getHeadHeight(this.getBukkitEntity(), this.getHeadHeightUnscaled());
+                        // public float getHeadHeight() {
+                        //   return CompatBridge.getHeadHeight(this.getBukkitEntity(), this.getHeadHeightUnscaled());
+                        // }
+                        mg = generateMethod(cv, Opcodes.ACC_PUBLIC, "getHeadHeight", Type.FLOAT_TYPE, NO_ARGS);
                         mg.loadThis();
                         mg.invokeVirtual(
-                            Type.getObjectType("net/minecraft/server/v1_9_R2/Entity"),
-                            new Method("getBukkitEntity", "()Lorg/bukkit/craftbukkit/v1_9_R2/entity/CraftEntity;")
+                            Type.getObjectType(opts.getNmsEntityClass()),
+                            new Method("getBukkitEntity", Type.getObjectType(opts.getCraftEntityClass()), NO_ARGS)
                         );
                         mg.loadThis();
                         mg.invokeVirtual(Type.getObjectType(className), new Method("getHeadHeightUnscaled", "()F"));
@@ -198,6 +227,8 @@ class EntityScaleTransformer1_9_R2 {
                         );
                         mg.returnValue();
                         mg.endMethod();
+
+                        addInfo(cv, className, "Added custom-scale logic");
                         super.visitEnd();
                     }
                 },
@@ -207,7 +238,7 @@ class EntityScaleTransformer1_9_R2 {
         return crw.getBytes();
     }
 
-    private static byte[] remapGetHeadHeight(ClassLoader loader, String className, byte[] bytes) {
+    private static byte[] transformEntitySubclass(ClassLoader loader, String className, byte[] bytes, Options opts) {
         ClassRewriter crw = new ClassRewriter(loader, bytes);
         crw.rewrite(
             (api, cv) ->
@@ -221,13 +252,16 @@ class EntityScaleTransformer1_9_R2 {
                         String[] exceptions
                     ) {
                         if ("getHeadHeight".equals(name) && "()F".equals(descriptor)) {
+                            // Rename getHeadHeight to getHeadHeightUnscaled
+                            addInfo(cv, className, "Remapped getHeadHeight to getHeadHeightUnscaled");
                             return new MethodVisitor(
                                 api,
                                 super.visitMethod(access, "getHeadHeightUnscaled", descriptor, signature, exceptions)
                             ) {
                                 @Override
                                 public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
-                                    if ("length".equals(name) && "net/minecraft/server/v1_9_R2/Entity".equals(owner)) {
+                                    if ("length".equals(name) && opts.getNmsEntityClass().equals(owner)) {
+                                        // Redirect length field access to unscaledLength
                                         name = "unscaledLength";
                                     }
                                     super.visitFieldInsn(opcode, owner, name, descriptor);
@@ -241,5 +275,14 @@ class EntityScaleTransformer1_9_R2 {
             0
         );
         return crw.getBytes();
+    }
+
+    @lombok.Builder(builderClassName = "Builder")
+    @Getter
+    public static final class Options {
+
+        private final @NonNull String compatBridgeClass;
+        private final @NonNull String nmsEntityClass;
+        private final @NonNull String craftEntityClass;
     }
 }

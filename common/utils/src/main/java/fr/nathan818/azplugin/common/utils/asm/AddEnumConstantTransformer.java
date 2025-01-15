@@ -2,8 +2,10 @@ package fr.nathan818.azplugin.common.utils.asm;
 
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.CONSTRUCTOR_NAME;
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.STATIC_INITIALIZER_NAME;
+import static fr.nathan818.azplugin.common.utils.asm.AgentClassWriter.addInfo;
 
 import java.util.Collection;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -153,6 +155,12 @@ public final class AddEnumConstantTransformer extends ClassVisitor {
             if (!inserted) {
                 throw new RuntimeException("New enum values not inserted: unsupported <clinit> structure");
             }
+            addInfo(
+                cv,
+                enumType.getClassName(),
+                "Added new enum constants ({0})",
+                enumConstants.stream().map(EnumConstant::getName).collect(Collectors.joining(", "))
+            );
         }
     }
 

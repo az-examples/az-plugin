@@ -3,7 +3,6 @@ package fr.nathan818.azplugin.bukkit.agent;
 import static fr.nathan818.azplugin.common.AZPlatform.log;
 
 import fr.nathan818.azplugin.bukkit.compat.CompatRegistry;
-import fr.nathan818.azplugin.bukkit.compat.agent.BukkitAgentUtil;
 import fr.nathan818.azplugin.common.utils.agent.Agent;
 import fr.nathan818.azplugin.common.utils.agent.LoadPluginsHook;
 import fr.nathan818.azplugin.common.utils.agent.PluginSupport;
@@ -27,8 +26,6 @@ public class Main2 {
     }
 
     private static void registerAgentCompats(Agent agent) throws ReflectiveOperationException {
-        BukkitAgentUtil.registerCommon(agent);
-
         List<String> registeredAgentCompats = new ArrayList<>();
         for (String agentCompatClassName : CompatRegistry.getAgentCompatClasses()) {
             Class<?> agentCompatClass;
