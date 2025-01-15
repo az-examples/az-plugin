@@ -16,7 +16,7 @@ final class AZFallbackLogger extends Logger {
     private static final AZFallbackLogger logger = new AZFallbackLogger();
 
     private AZFallbackLogger() {
-        super(AZFallbackLogger.class.getCanonicalName(), null);
+        super(AZFallbackLogger.class.getSimpleName(), null);
         addHandler(new FallbackHandler());
         setLevel(Level.ALL);
     }

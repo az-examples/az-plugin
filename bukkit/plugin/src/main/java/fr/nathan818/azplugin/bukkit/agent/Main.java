@@ -2,44 +2,71 @@ package fr.nathan818.azplugin.bukkit.agent;
 
 import static fr.nathan818.azplugin.common.AZPlatform.log;
 
-import fr.nathan818.azplugin.bukkit.compat.CompatRegistry;
-import fr.nathan818.azplugin.bukkit.compat.agent.BukkitAgentUtil;
-import fr.nathan818.azplugin.common.utils.agent.Agent;
-import fr.nathan818.azplugin.common.utils.agent.LoadPluginsHook;
+import fr.nathan818.azplugin.common.utils.JvmMagic;
 import fr.nathan818.azplugin.common.utils.agent.PluginSupport;
+import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.URL;
+import java.security.ProtectionDomain;
 import java.util.logging.Level;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 
-public class Main {
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+public class Main implements ClassFileTransformer {
 
     public static void premain(String agentArgs, Instrumentation inst) {
         try {
-            Agent agent = new Agent();
-            LoadPluginsHook.register(agent, n -> n.startsWith("org/bukkit/craftbukkit/") && n.endsWith("/CraftServer"));
-            registerAgentCompats(agent);
-            inst.addTransformer(agent);
-            PluginSupport.markAgentLoaded(Main.class);
+            if (!PluginSupport.markAgentInjected(Main.class)) {
+                return;
+            }
+
+            // Early check for accessibility issues
+            java.lang.String.class.getDeclaredFields()[0].setAccessible(true);
+            java.net.URL.class.getDeclaredFields()[0].setAccessible(true);
+            jdk.internal.loader.URLClassPath.class.getDeclaredFields()[0].setAccessible(true);
+
+            // Register the CraftBukkit Main class detector
+            inst.addTransformer(new Main(agentArgs, inst));
         } catch (Throwable ex) {
             throw PluginSupport.handleFatalError(ex);
         }
     }
 
-    private static void registerAgentCompats(Agent agent) throws ReflectiveOperationException {
-        BukkitAgentUtil.registerCommon(agent);
+    private final String agentArgs;
+    private final Instrumentation inst;
 
-        List<String> registeredAgentCompats = new ArrayList<>();
-        for (String agentCompatClassName : CompatRegistry.getAgentCompatClasses()) {
-            Class<?> agentCompatClass;
-            try {
-                agentCompatClass = Class.forName(agentCompatClassName);
-            } catch (ClassNotFoundException ignored) {
-                continue;
+    @SneakyThrows
+    @Override
+    public byte[] transform(
+        ClassLoader loader,
+        String className,
+        Class<?> classBeingRedefined,
+        ProtectionDomain protectionDomain,
+        byte[] classfileBuffer
+    ) {
+        try {
+            if ("org/bukkit/craftbukkit/Main".equals(className)) {
+                inst.removeTransformer(this);
+                log(Level.INFO, "CraftBukkit Main class detected, injecting agent");
+
+                // Add the plugin to the CraftBukkit classloader
+                ClassLoader mainLoader = Main.class.getClassLoader();
+                if (!mainLoader.equals(loader)) {
+                    log(Level.INFO, "Moving agent jar to CraftBukkit classloader");
+                    URL jar = Main.class.getProtectionDomain().getCodeSource().getLocation();
+                    JvmMagic.removeJarFromClassLoader(mainLoader, jar);
+                    JvmMagic.addJarToClassloader(loader, jar);
+                }
+
+                // Load the real agent
+                Class<?> main2 = Class.forName(Main.class.getName() + "2", false, loader);
+                main2.getMethod("premain", String.class, Instrumentation.class).invoke(null, agentArgs, inst);
             }
-            agentCompatClass.getMethod("register", Agent.class).invoke(null, agent);
-            registeredAgentCompats.add(agentCompatClass.getSimpleName());
+        } catch (Throwable ex) {
+            throw PluginSupport.handleFatalError(ex);
         }
-        log(Level.INFO, "Registered agent compats: {0}", registeredAgentCompats);
+        return null;
     }
 }

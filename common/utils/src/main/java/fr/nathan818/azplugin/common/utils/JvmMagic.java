@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Collection;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
 import lombok.SneakyThrows;
@@ -13,15 +14,16 @@ import lombok.experimental.UtilityClass;
 public class JvmMagic {
 
     @SneakyThrows(ReflectiveOperationException.class)
-    public static void addJarToClassloader(ClassLoader loader, URL jar) {
+    public static boolean addJarToClassloader(ClassLoader loader, URL jar) {
         Object ucp = getUCP(loader);
         if (ucp == null) {
-            return;
+            return false;
         }
 
         Method addURLMethod = ucp.getClass().getDeclaredMethod("addURL", URL.class);
         addURLMethod.setAccessible(true);
         addURLMethod.invoke(ucp, jar);
+        return true;
     }
 
     public static boolean removeJarFromClassLoader(ClassLoader classLoader, URL jar) {
@@ -122,5 +124,15 @@ public class JvmMagic {
             } catch (NoSuchFieldException ignored) {}
         } while ((clazz = clazz.getSuperclass()) != null);
         return null;
+    }
+
+    public static boolean clearShutdownHooks() {
+        try {
+            Field hooksField = Class.forName("java.lang.ApplicationShutdownHooks").getDeclaredField("hooks");
+            hooksField.setAccessible(true);
+            hooksField.set(null, new IdentityHashMap<>());
+            return true;
+        } catch (Exception ignored) {}
+        return false;
     }
 }

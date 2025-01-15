@@ -47,7 +47,7 @@ public class AZPlugin extends JavaPlugin implements AZBukkitPlatform {
             materialManager.registerMaterials(); // Custom blocks and items need to be registered early
             log(Level.INFO, "Loaded!");
         } catch (Throwable ex) {
-            throw PluginSupport.handleFatalError(ex);
+            throw PluginSupport.handleFatalError(ex, Bukkit::shutdown);
         }
     }
 

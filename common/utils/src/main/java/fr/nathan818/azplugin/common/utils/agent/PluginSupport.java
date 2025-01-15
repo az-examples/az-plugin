@@ -2,6 +2,7 @@ package fr.nathan818.azplugin.common.utils.agent;
 
 import static fr.nathan818.azplugin.common.AZPlatform.log;
 
+import fr.nathan818.azplugin.common.utils.JvmMagic;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.management.RuntimeMXBean;
@@ -20,38 +21,63 @@ public class PluginSupport {
     private static boolean agentLoaded = false;
     private static Class<?> agentMainClass;
 
+    public static synchronized boolean markAgentInjected(Class<?> agentMainClass) {
+        if (PluginSupport.agentMainClass != null) {
+            return false;
+        }
+        PluginSupport.agentMainClass = agentMainClass;
+        log(Level.INFO, "Successfully injected agent");
+        return true;
+    }
+
     public static synchronized void markAgentLoaded(Class<?> agentMainClass) {
-        if (!PluginSupport.agentLoaded) {
-            PluginSupport.agentMainClass = agentMainClass;
+        if (PluginSupport.agentMainClass == agentMainClass) {
             PluginSupport.agentLoaded = true;
-            log(Level.INFO, "Successfully injected agent");
         }
     }
 
     public static synchronized void assertAgentLoaded(Class<?> agentMainClass) {
-        if (!PluginSupport.agentLoaded) {
-            PluginSupport.agentMainClass = agentMainClass;
-            throw new IllegalStateException("Agent not loaded!");
+        if (PluginSupport.agentMainClass == agentMainClass && PluginSupport.agentLoaded) {
+            return;
         }
+        PluginSupport.agentMainClass = agentMainClass;
+        throw new IllegalStateException("Agent not loaded!");
     }
 
     public static RuntimeException handleFatalError(Throwable exception) {
+        return handleFatalError(exception, null);
+    }
+
+    public static RuntimeException handleFatalError(Throwable exception, Runnable alternativeShutdown) {
         String message = "[AZPlugin] Fatal error occurred: " + exception.getMessage();
         message += "\n\n" + getExceptionTrace(exception);
         if (isBadCommandException(exception)) {
             message += "\n\nTry starting your server with the following command:\n\n" + getRecommendedCommand();
         }
-        message += "\n\nExiting...";
-        System.err.println(message);
-        System.exit(1); // Exit now to prevent damage to the server if custom blocks/items are not registered
+        if (JvmMagic.clearShutdownHooks()) {
+            message += "\n\nExiting...";
+            System.err.println(message);
+            System.exit(1); // Exit now to prevent damage to the server if custom blocks/items are not registered
+        } else {
+            message += "\n\n";
+            System.err.println(message);
+            if (alternativeShutdown != null) {
+                alternativeShutdown.run();
+            }
+        }
         throw Lombok.sneakyThrow(exception);
     }
 
     private static boolean isBadCommandException(Throwable exception) {
-        return (
-            "Agent not loaded!".equals(exception.getMessage()) ||
-            "InaccessibleObjectException".equals(exception.getClass().getSimpleName())
-        );
+        do {
+            if (
+                "Agent not loaded!".equals(exception.getMessage()) ||
+                "InaccessibleObjectException".equals(exception.getClass().getSimpleName())
+            ) {
+                return true;
+            }
+        } while ((exception = exception.getCause()) != null);
+        return false;
     }
 
     public static String getRecommendedCommand() {
@@ -61,6 +87,8 @@ public class PluginSupport {
         }
         if (supportsJavaModules()) {
             addIfMissing(cmd, 1, "--add-opens=java.base/jdk.internal.loader=ALL-UNNAMED");
+            addIfMissing(cmd, 1, "--add-opens=java.base/java.net=ALL-UNNAMED");
+            addIfMissing(cmd, 1, "--add-opens=java.base/java.lang=ALL-UNNAMED");
         }
         return String.join(" ", cmd);
     }

@@ -13,7 +13,6 @@ public class Main {
             LoadPluginsHook.register(agent, n -> n.equals("net/md_5/bungee/api/plugin/PluginManager"));
             PacketTransformers.register(agent);
             inst.addTransformer(agent);
-            PluginSupport.markAgentLoaded(Main.class);
         } catch (Throwable ex) {
             throw PluginSupport.handleFatalError(ex);
         }
