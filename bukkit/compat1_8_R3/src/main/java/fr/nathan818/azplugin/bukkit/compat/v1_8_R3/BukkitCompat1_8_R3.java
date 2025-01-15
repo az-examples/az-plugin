@@ -135,4 +135,15 @@ public class BukkitCompat1_8_R3 implements BukkitCompat {
         }
         return null;
     }
+
+    @Override
+    public boolean isSneaking(@NotNull Entity entity) {
+        net.minecraft.server.v1_8_R3.Entity nmsEntity = ((CraftEntity) entity).getHandle();
+        return nmsEntity.isSneaking();
+    }
+
+    @Override
+    public void setBboxScale(@NotNull Entity entity, float width, float height) {
+        CompatBridge1_8_R3.setBboxScale((CraftEntity) entity, width, height);
+    }
 }

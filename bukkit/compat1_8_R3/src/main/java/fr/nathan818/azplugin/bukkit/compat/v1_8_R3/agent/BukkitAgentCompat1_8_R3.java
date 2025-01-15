@@ -3,6 +3,7 @@ package fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent;
 import static fr.nathan818.azplugin.bukkit.compat.agent.ChatPacketTransformers.registerChatPacketTransformer;
 import static fr.nathan818.azplugin.bukkit.compat.agent.CraftBukkitTransformers.registerCraftField;
 import static fr.nathan818.azplugin.bukkit.compat.agent.CraftBukkitTransformers.registerGetItemStackHandle;
+import static fr.nathan818.azplugin.bukkit.compat.agent.EntityScaleTransformers.registerEntityScaleTransformer;
 import static fr.nathan818.azplugin.bukkit.compat.agent.NMSMaterialTransformers.registerNMSMaterialTransformer;
 import static fr.nathan818.azplugin.bukkit.compat.material.NMSMaterialDefinitions.ARMOR_MATERIALS;
 import static fr.nathan818.azplugin.bukkit.compat.material.NMSMaterialDefinitions.TOOL_MATERIALS;
@@ -50,6 +51,11 @@ public class BukkitAgentCompat1_8_R3 {
             false
         );
         EntityTrackEventTransformers1_8_R3.register(agent);
+        registerEntityScaleTransformer(agent, opts -> {
+            opts.compatBridgeClass(COMPAT_BRIDGE1_8_R3);
+            opts.nmsEntityClass("net/minecraft/server/v1_8_R3/Entity");
+            opts.craftEntityClass("org/bukkit/craftbukkit/v1_8_R3/entity/CraftEntity");
+        });
     }
 
     private static AddEnumConstantTransformer.InitializerGenerator initEnumToolMaterial(
