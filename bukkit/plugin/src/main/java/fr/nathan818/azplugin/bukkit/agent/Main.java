@@ -24,10 +24,10 @@ public class Main implements ClassFileTransformer {
 
             // Early check for accessibility issues
             try {
-                jdk.internal.loader.URLClassPath.class.getDeclaredFields()[0].setAccessible(true);
+                Class.forName("jdk.internal.loader.URLClassPath").getDeclaredFields()[0].setAccessible(true);
                 java.lang.String.class.getDeclaredFields()[0].setAccessible(true);
                 java.net.URL.class.getDeclaredFields()[0].setAccessible(true);
-            } catch (NoClassDefFoundError ignored) {
+            } catch (ClassNotFoundException | NoClassDefFoundError ignored) {
                 // Java 8
             }
 

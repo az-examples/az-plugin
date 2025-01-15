@@ -49,7 +49,7 @@ public class AZPlayerImpl extends AZClientAbstract implements AZPlayer {
     private Queue<PendingTask> pendingTasks = new ArrayDeque<>();
     private final PlayerSyncQueue changesSyncQueue = new PlayerSyncQueue(this);
 
-    @Delegate(types = AZEntityTrait.class)
+    @Delegate(types = AZEntity.class)
     private final AZEntityTrait entityTrait;
 
     private final Map<AZCosmeticEquipment.Slot, EntityMetaCosmeticEquipment> cosmeticEquipmentsMeta = new EnumMap<>(
@@ -128,6 +128,11 @@ public class AZPlayerImpl extends AZClientAbstract implements AZPlayer {
     @Override
     public Entity getBukkitEntity() {
         return bukkitPlayer;
+    }
+
+    @Override
+    public boolean isValid() {
+        return !isClosed();
     }
 
     @Override
