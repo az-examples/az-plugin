@@ -72,6 +72,7 @@ public class PluginSupport {
         do {
             if (
                 "Agent not loaded!".equals(exception.getMessage()) ||
+                "IllegalAccessError".equals(exception.getClass().getSimpleName()) ||
                 "InaccessibleObjectException".equals(exception.getClass().getSimpleName())
             ) {
                 return true;

@@ -23,9 +23,13 @@ public class Main implements ClassFileTransformer {
             }
 
             // Early check for accessibility issues
-            java.lang.String.class.getDeclaredFields()[0].setAccessible(true);
-            java.net.URL.class.getDeclaredFields()[0].setAccessible(true);
-            jdk.internal.loader.URLClassPath.class.getDeclaredFields()[0].setAccessible(true);
+            try {
+                jdk.internal.loader.URLClassPath.class.getDeclaredFields()[0].setAccessible(true);
+                java.lang.String.class.getDeclaredFields()[0].setAccessible(true);
+                java.net.URL.class.getDeclaredFields()[0].setAccessible(true);
+            } catch (NoClassDefFoundError ignored) {
+                // Java 8
+            }
 
             // Register the CraftBukkit Main class detector
             inst.addTransformer(new Main(agentArgs, inst));
