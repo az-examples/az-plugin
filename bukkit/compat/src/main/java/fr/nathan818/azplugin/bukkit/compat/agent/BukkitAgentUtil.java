@@ -20,9 +20,15 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.GeneratorAdapter;
 
 @UtilityClass
-public class NMSAgentUtil {
+public class BukkitAgentUtil {
 
     private static final int NEW_CHAT_MESSAGE_LIMIT = 16384;
+
+    public static void registerCommon(Agent agent) {
+        agent.addClassToPreload("fr/nathan818/azplugin/bukkit/compat/agent/CompatBridge");
+        agent.addClassToPreload("fr/nathan818/azplugin/bukkit/compat/event/EntityTrackBeginEvent");
+        BukkitMaterialTransformers.register(agent);
+    }
 
     public static <T extends EnumDefinition> void registerMaterialEnumTransformer(
         Agent agent,
@@ -31,8 +37,8 @@ public class NMSAgentUtil {
         Collection<? extends T> materials,
         boolean fixToolMaterialName1_8
     ) {
-        agent.addTransformer(className, (ignored, bytes) -> {
-            ClassRewriter crw = new ClassRewriter(bytes);
+        agent.addTransformer(className, (loader, ignored, bytes) -> {
+            ClassRewriter crw = new ClassRewriter(loader, bytes);
             crw.rewrite((api, cv) ->
                 new AddEnumConstantTransformer(
                     api,
@@ -61,8 +67,8 @@ public class NMSAgentUtil {
         int minRefCount,
         int maxRefCount
     ) {
-        agent.addTransformer(className, (ignored, bytes) -> {
-            ClassRewriter crw = new ClassRewriter(bytes);
+        agent.addTransformer(className, (loader, ignored, bytes) -> {
+            ClassRewriter crw = new ClassRewriter(loader, bytes);
 
             // Verify if the target class matches the expected pattern
             ChatMessageLimitClassTransformer verifier = crw.read(api ->
@@ -91,13 +97,13 @@ public class NMSAgentUtil {
         String compatBridgeClassName,
         String craftItemStackClassName
     ) {
-        agent.addTransformer(compatBridgeClassName, (ignored, bytes) -> {
-            ClassRewriter crw = new ClassRewriter(bytes);
+        agent.addTransformer(compatBridgeClassName, (loader, ignored, bytes) -> {
+            ClassRewriter crw = new ClassRewriter(loader, bytes);
             crw.rewrite(GetItemStackHandleTransformer::new);
             return crw.getBytes();
         });
-        agent.addTransformer(craftItemStackClassName, (ignored, bytes) -> {
-            ClassRewriter crw = new ClassRewriter(bytes);
+        agent.addTransformer(craftItemStackClassName, (loader, ignored, bytes) -> {
+            ClassRewriter crw = new ClassRewriter(loader, bytes);
             crw.rewrite((api, cv) ->
                 new ClassVisitor(api, cv) {
                     @Override
@@ -125,8 +131,8 @@ public class NMSAgentUtil {
         String implClass,
         String fieldName
     ) {
-        agent.addTransformer(implClass, (ignored, bytes) -> {
-            ClassRewriter crw = new ClassRewriter(bytes);
+        agent.addTransformer(implClass, (loader, ignored, bytes) -> {
+            ClassRewriter crw = new ClassRewriter(loader, bytes);
             crw.rewrite((api, cv) ->
                 new ClassVisitor(api, cv) {
                     @Override
@@ -138,8 +144,8 @@ public class NMSAgentUtil {
             );
             return crw.getBytes();
         });
-        agent.addTransformer(compatBridgeClassName, (ignored, bytes) -> {
-            ClassRewriter crw = new ClassRewriter(bytes);
+        agent.addTransformer(compatBridgeClassName, (loader, ignored, bytes) -> {
+            ClassRewriter crw = new ClassRewriter(loader, bytes);
             crw.rewrite((api, cv) ->
                 new ClassVisitor(api, cv) {
                     @Override

@@ -3,6 +3,7 @@ package fr.nathan818.azplugin.bukkit.agent;
 import static fr.nathan818.azplugin.common.AZPlatform.log;
 
 import fr.nathan818.azplugin.bukkit.compat.CompatRegistry;
+import fr.nathan818.azplugin.bukkit.compat.agent.BukkitAgentUtil;
 import fr.nathan818.azplugin.common.utils.agent.Agent;
 import fr.nathan818.azplugin.common.utils.agent.LoadPluginsHook;
 import fr.nathan818.azplugin.common.utils.agent.PluginSupport;
@@ -15,9 +16,8 @@ public class Main {
 
     public static void premain(String agentArgs, Instrumentation inst) {
         try {
-            Agent agent = new Agent(inst);
+            Agent agent = new Agent();
             LoadPluginsHook.register(agent, n -> n.startsWith("org/bukkit/craftbukkit/") && n.endsWith("/CraftServer"));
-            BukkitMaterialTransformers.register(agent);
             registerAgentCompats(agent);
             inst.addTransformer(agent);
             PluginSupport.markAgentLoaded(Main.class);
@@ -27,11 +27,8 @@ public class Main {
     }
 
     private static void registerAgentCompats(Agent agent) throws ReflectiveOperationException {
-        // Preload bridge classes
-        agent.addClassToPreload("fr/nathan818/azplugin/bukkit/compat/agent/CompatBridge");
-        agent.addClassToPreload("fr/nathan818/azplugin/bukkit/compat/event/EntityTrackBeginEvent");
+        BukkitAgentUtil.registerCommon(agent);
 
-        // Register agent compats
         List<String> registeredAgentCompats = new ArrayList<>();
         for (String agentCompatClassName : CompatRegistry.getAgentCompatClasses()) {
             Class<?> agentCompatClass;

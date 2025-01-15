@@ -1,4 +1,4 @@
-package fr.nathan818.azplugin.bukkit.agent;
+package fr.nathan818.azplugin.bukkit.compat.agent;
 
 import static fr.nathan818.azplugin.bukkit.compat.material.BukkitMaterialDefinitions.MATERIALS;
 import static fr.nathan818.azplugin.common.AZPlatform.log;
@@ -8,6 +8,7 @@ import fr.nathan818.azplugin.bukkit.compat.material.BukkitMaterialDefinition;
 import fr.nathan818.azplugin.common.utils.agent.Agent;
 import fr.nathan818.azplugin.common.utils.asm.ASMUtil;
 import fr.nathan818.azplugin.common.utils.asm.AddEnumConstantTransformer;
+import fr.nathan818.azplugin.common.utils.asm.AgentClassWriter;
 import fr.nathan818.azplugin.common.utils.asm.ClassRewriter;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -34,14 +35,14 @@ class BukkitMaterialTransformers {
     public static void register(Agent agent) {
         agent.addTransformer(BUKKIT_MATERIAL_TYPE.getInternalName(), BukkitMaterialTransformers::transformMaterialEnum);
         for (BukkitMaterialDefinition material : MATERIALS) {
-            agent.addTransformer(getMaterialSubclassType(material).getInternalName(), (ignored1, ignored2) ->
-                createMaterialSubclass(material)
+            agent.addTransformer(getMaterialSubclassType(material).getInternalName(), (loader, ignored1, ignored2) ->
+                createMaterialSubclass(loader, material)
             );
         }
     }
 
-    private static byte[] transformMaterialEnum(String className, byte[] bytes) {
-        ClassRewriter crw = new ClassRewriter(bytes);
+    private static byte[] transformMaterialEnum(ClassLoader loader, String className, byte[] bytes) {
+        ClassRewriter crw = new ClassRewriter(loader, bytes);
         crw.rewrite((api, cv) ->
             new AddEnumConstantTransformer(
                 api,
@@ -67,8 +68,8 @@ class BukkitMaterialTransformers {
         return crw.getBytes();
     }
 
-    private static byte[] createMaterialSubclass(BukkitMaterialDefinition material) {
-        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
+    private static byte[] createMaterialSubclass(ClassLoader loader, BukkitMaterialDefinition material) {
+        ClassWriter cw = new AgentClassWriter(loader, ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
 
         // Define Material subclass
         cw.visit(
@@ -104,6 +105,6 @@ class BukkitMaterialTransformers {
     }
 
     private static Type getMaterialSubclassType(BukkitMaterialDefinition material) {
-        return Type.getObjectType(RtClass.class.getName().replace('.', '/') + "$Material" + material.getId());
+        return Type.getObjectType("fr/nathan818/azplugin/bukkit/compat/agent/RtClass$Material" + material.getId());
     }
 }

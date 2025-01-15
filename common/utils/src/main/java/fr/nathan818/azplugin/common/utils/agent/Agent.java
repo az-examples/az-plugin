@@ -1,8 +1,6 @@
 package fr.nathan818.azplugin.common.utils.agent;
 
-import fr.nathan818.azplugin.common.utils.asm.ClassTransformer;
 import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,19 +12,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 public final class Agent implements ClassFileTransformer {
 
-    private final @Getter Instrumentation instrumentation;
     private final Set<String> classesToPreload = Collections.newSetFromMap(new LinkedHashMap<>());
     private final Map<String, List<ClassTransformer>> transformers = new LinkedHashMap<>();
     private final List<PredicateTransformer> predicateTransformers = new ArrayList<>();
-
-    public Agent(@NonNull Instrumentation instrumentation) {
-        this.instrumentation = instrumentation;
-    }
 
     public Collection<String> getClassesToPreload() {
         return classesToPreload;
@@ -60,7 +52,7 @@ public final class Agent implements ClassFileTransformer {
         try {
             List<ClassTransformer> transformers = this.transformers.getOrDefault(className, Collections.emptyList());
             for (ClassTransformer transformer : transformers) {
-                byte[] transformed = transformer.transform(className, ret);
+                byte[] transformed = transformer.transform(loader, className, ret);
                 if (transformed != null) {
                     ret = transformed;
                 }
@@ -69,7 +61,7 @@ public final class Agent implements ClassFileTransformer {
                 if (!transformer.getClassName().test(className)) {
                     continue;
                 }
-                byte[] transformed = transformer.getTransformer().transform(className, ret);
+                byte[] transformed = transformer.getTransformer().transform(loader, className, ret);
                 if (transformed != null) {
                     ret = transformed;
                 }

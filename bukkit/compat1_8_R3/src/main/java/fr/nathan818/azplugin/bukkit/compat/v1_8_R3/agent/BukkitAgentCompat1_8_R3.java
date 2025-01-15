@@ -1,10 +1,13 @@
 package fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent;
 
+import static fr.nathan818.azplugin.bukkit.compat.agent.BukkitAgentUtil.registerChatPacketTransformer;
+import static fr.nathan818.azplugin.bukkit.compat.agent.BukkitAgentUtil.registerCraftField;
+import static fr.nathan818.azplugin.bukkit.compat.agent.BukkitAgentUtil.registerGetItemStackHandle;
+import static fr.nathan818.azplugin.bukkit.compat.agent.BukkitAgentUtil.registerMaterialEnumTransformer;
 import static fr.nathan818.azplugin.bukkit.compat.material.NMSMaterialDefinitions.ARMOR_MATERIALS;
 import static fr.nathan818.azplugin.bukkit.compat.material.NMSMaterialDefinitions.TOOL_MATERIALS;
 import static fr.nathan818.azplugin.common.AZPlatform.log;
 
-import fr.nathan818.azplugin.bukkit.compat.agent.NMSAgentUtil;
 import fr.nathan818.azplugin.bukkit.compat.material.NMSArmorMaterialDefinition;
 import fr.nathan818.azplugin.bukkit.compat.material.NMSToolMaterialDefinition;
 import fr.nathan818.azplugin.common.utils.agent.Agent;
@@ -20,12 +23,8 @@ public class BukkitAgentCompat1_8_R3 {
 
     public static void register(Agent agent) {
         String compatBridge = "fr/nathan818/azplugin/bukkit/compat/v1_8_R3/agent/CompatBridge1_8_R3";
-        NMSAgentUtil.registerGetItemStackHandle(
-            agent,
-            compatBridge,
-            "org/bukkit/craftbukkit/v1_8_R3/inventory/CraftItemStack"
-        );
-        NMSAgentUtil.registerCraftField(
+        registerGetItemStackHandle(agent, compatBridge, "org/bukkit/craftbukkit/v1_8_R3/inventory/CraftItemStack");
+        registerCraftField(
             agent,
             compatBridge,
             "getAZEntity",
@@ -33,15 +32,15 @@ public class BukkitAgentCompat1_8_R3 {
             "org/bukkit/craftbukkit/v1_8_R3/entity/CraftEntity",
             "azEntity"
         );
-        NMSAgentUtil.registerChatPacketTransformer(agent, "net/minecraft/server/v1_8_R3/PacketPlayInChat", 100, 3, 3);
-        NMSAgentUtil.registerMaterialEnumTransformer(
+        registerChatPacketTransformer(agent, "net/minecraft/server/v1_8_R3/PacketPlayInChat", 100, 3, 3);
+        registerMaterialEnumTransformer(
             agent,
             "net/minecraft/server/v1_8_R3/Item$EnumToolMaterial",
             BukkitAgentCompat1_8_R3::initEnumToolMaterial,
             TOOL_MATERIALS,
             true
         );
-        NMSAgentUtil.registerMaterialEnumTransformer(
+        registerMaterialEnumTransformer(
             agent,
             "net/minecraft/server/v1_8_R3/ItemArmor$EnumArmorMaterial",
             BukkitAgentCompat1_8_R3::initEnumArmorMaterial,
@@ -108,8 +107,8 @@ public class BukkitAgentCompat1_8_R3 {
         };
     }
 
-    private static byte[] insertEntityTrackEventCalls(String className, byte[] bytes) {
-        ClassRewriter crw = new ClassRewriter(bytes);
+    private static byte[] insertEntityTrackEventCalls(ClassLoader loader, String className, byte[] bytes) {
+        ClassRewriter crw = new ClassRewriter(loader, bytes);
         EntityTrackEventClassTransformer1_8_R3 tr = crw.rewrite(
             EntityTrackEventClassTransformer1_8_R3::new,
             ClassRewriter.DEFAULT_PARSING_OPTIONS | ClassReader.EXPAND_FRAMES,

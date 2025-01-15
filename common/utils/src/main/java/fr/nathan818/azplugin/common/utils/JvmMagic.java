@@ -1,6 +1,7 @@
 package fr.nathan818.azplugin.common.utils;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Iterator;
@@ -10,6 +11,18 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class JvmMagic {
+
+    @SneakyThrows(ReflectiveOperationException.class)
+    public static void addJarToClassloader(ClassLoader loader, URL jar) {
+        Object ucp = getUCP(loader);
+        if (ucp == null) {
+            return;
+        }
+
+        Method addURLMethod = ucp.getClass().getDeclaredMethod("addURL", URL.class);
+        addURLMethod.setAccessible(true);
+        addURLMethod.invoke(ucp, jar);
+    }
 
     public static boolean removeJarFromClassLoader(ClassLoader classLoader, URL jar) {
         Object ucp = getUCP(classLoader);

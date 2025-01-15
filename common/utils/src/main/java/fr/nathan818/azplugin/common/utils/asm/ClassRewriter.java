@@ -14,15 +14,17 @@ public final class ClassRewriter {
     public static final int DEFAULT_WRITER_FLAGS = ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES;
 
     private final int api;
+    private @Getter ClassLoader loader;
     private @Getter byte[] bytes;
     private ClassReader reader;
 
-    public ClassRewriter(byte[] bytes) {
-        this(Opcodes.ASM9, bytes);
+    public ClassRewriter(ClassLoader loader, byte[] bytes) {
+        this(Opcodes.ASM9, loader, bytes);
     }
 
-    private ClassRewriter(int api, byte[] bytes) {
+    private ClassRewriter(int api, ClassLoader loader, byte[] bytes) {
         this.api = api;
+        this.loader = requireNonNull(loader);
         this.bytes = requireNonNull(bytes);
     }
 
@@ -45,7 +47,7 @@ public final class ClassRewriter {
         int parsingOptions,
         int writerFlags
     ) {
-        ClassWriter cw = new ClassWriter(writerFlags);
+        ClassWriter cw = new AgentClassWriter(loader, writerFlags);
         T cv = constructor.create(api, cw);
         getReader().accept(cv, parsingOptions);
         setBytes(cw.toByteArray());

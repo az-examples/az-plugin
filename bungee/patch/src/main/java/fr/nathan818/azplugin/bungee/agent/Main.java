@@ -9,7 +9,7 @@ public class Main {
 
     public static void premain(String agentArgs, Instrumentation inst) {
         try {
-            Agent agent = new Agent(inst);
+            Agent agent = new Agent();
             LoadPluginsHook.register(agent, n -> n.equals("net/md_5/bungee/api/plugin/PluginManager"));
             PacketTransformers.register(agent);
             inst.addTransformer(agent);

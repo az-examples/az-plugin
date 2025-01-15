@@ -1,4 +1,4 @@
-package fr.nathan818.azplugin.bukkit.agent;
+package fr.nathan818.azplugin.bukkit.compat.agent;
 
 /**
  * Runtime-generated classes (transformed by the agent).

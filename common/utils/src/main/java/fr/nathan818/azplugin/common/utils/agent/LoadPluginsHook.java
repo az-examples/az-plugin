@@ -20,8 +20,8 @@ public class LoadPluginsHook {
 
     public static void register(Agent agent, Predicate<String> classNameFilter) {
         LoadPluginsHook.agent = agent;
-        agent.addTransformer(classNameFilter, (className, bytes) -> {
-            ClassRewriter crw = new ClassRewriter(bytes);
+        agent.addTransformer(classNameFilter, (loader, className, bytes) -> {
+            ClassRewriter crw = new ClassRewriter(loader, bytes);
             HookClassTransformer tr = crw.rewrite((api, cv) -> new HookClassTransformer(api, cv, "loadPlugins", "()V"));
             if (tr.isHooked()) {
                 log(Level.INFO, "Successfully hooked into {0}.loadPlugins()", className);
