@@ -11,6 +11,7 @@ import java.util.function.Supplier;
 import java.util.logging.Level;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -107,5 +108,21 @@ public interface BukkitCompat {
     @Nullable
     default <T extends AZEntity> T setAZEntity(@NotNull Entity entity, @Nullable Supplier<@NotNull T> azEntity) {
         throw new UnsupportedOperationException("Not implemented");
+    }
+
+    default boolean isSneaking(@NotNull Entity entity) {
+        return entity instanceof Player && ((Player) entity).isSneaking();
+    }
+
+    default boolean isSleeping(@NotNull Entity entity) {
+        return entity instanceof HumanEntity && ((HumanEntity) entity).isSleeping();
+    }
+
+    default boolean isElytraFlying(@NotNull Entity entity) {
+        return false;
+    }
+
+    default void setBboxScale(@NotNull Entity entity, float width, float height) {
+        // Do nothing when not implemented
     }
 }

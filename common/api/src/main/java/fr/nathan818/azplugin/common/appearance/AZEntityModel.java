@@ -16,15 +16,25 @@ import pactify.client.api.mcprotocol.model.NotchianNbtTagCompound;
 @EqualsAndHashCode
 public final class AZEntityModel {
 
-    private final int modelId; // Minecraft 1.9.4 entity ID
+    @lombok.Builder.Default
+    private final int modelId = 3072; // Minecraft 1.9.4 entity ID, or 3072 for "self"
+
     private final @Nullable NotchianNbtTagCompound metadata;
     private final float offsetX;
     private final float offsetY;
     private final float offsetZ;
-    private final float eyeHeightStand;
-    private final float eyeHeightSneak;
-    private final float eyeHeightSleep;
-    private final float eyeHeightElytra;
+
+    @lombok.Builder.Default
+    private final float eyeHeightStand = Float.NaN;
+
+    @lombok.Builder.Default
+    private final float eyeHeightSneak = Float.NaN;
+
+    @lombok.Builder.Default
+    private final float eyeHeightSleep = Float.NaN;
+
+    @lombok.Builder.Default
+    private final float eyeHeightElytra = Float.NaN;
 
     public static class Builder {
 
@@ -36,11 +46,11 @@ public final class AZEntityModel {
         }
 
         public Builder eyeHeight(float eyeHeightStand) {
-            return eyeHeight(eyeHeightStand, eyeHeightStand, eyeHeightStand, eyeHeightStand);
+            return eyeHeight(eyeHeightStand, eyeHeightStand, Float.NaN, Float.NaN);
         }
 
         public Builder eyeHeight(float eyeHeightStand, float eyeHeightSneak) {
-            return eyeHeight(eyeHeightStand, eyeHeightSneak, eyeHeightStand, eyeHeightStand);
+            return eyeHeight(eyeHeightStand, eyeHeightSneak, Float.NaN, Float.NaN);
         }
 
         public Builder eyeHeight(
@@ -49,10 +59,14 @@ public final class AZEntityModel {
             float eyeHeightSleep,
             float eyeHeightElytra
         ) {
-            this.eyeHeightStand = eyeHeightStand;
-            this.eyeHeightSneak = eyeHeightSneak;
-            this.eyeHeightSleep = eyeHeightSleep;
-            this.eyeHeightElytra = eyeHeightElytra;
+            this.eyeHeightStand$value = eyeHeightStand;
+            this.eyeHeightStand$set = true;
+            this.eyeHeightSneak$value = eyeHeightSneak;
+            this.eyeHeightSneak$set = true;
+            this.eyeHeightSleep$value = eyeHeightSleep;
+            this.eyeHeightSleep$set = true;
+            this.eyeHeightElytra$value = eyeHeightElytra;
+            this.eyeHeightElytra$set = true;
             return this;
         }
     }

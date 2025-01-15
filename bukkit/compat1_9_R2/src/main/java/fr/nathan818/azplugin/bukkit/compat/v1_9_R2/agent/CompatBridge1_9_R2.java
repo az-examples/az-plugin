@@ -18,4 +18,8 @@ public class CompatBridge1_9_R2 {
     public static void setAZEntity(@NotNull CraftEntity entity, @Nullable Object azEntity) {
         throw new UnsupportedOperationException(); // implemented by BukkitAgentCompat1_9_R2
     }
+
+    public static void setBboxScale(@NotNull CraftEntity entity, float width, float height) {
+        throw new UnsupportedOperationException(); // implemented by BukkitAgentCompat1_9_R2
+    }
 }

@@ -2,6 +2,7 @@ package fr.nathan818.azplugin.bukkit.plugin.entity;
 
 import static fr.nathan818.azplugin.bukkit.AZBukkitShortcuts.az;
 import static fr.nathan818.azplugin.bukkit.compat.BukkitCompat.compat;
+import static fr.nathan818.azplugin.common.AZPlatform.log;
 
 import fr.nathan818.azplugin.bukkit.entity.AZEntity;
 import fr.nathan818.azplugin.bukkit.entity.AZPlayer;
@@ -18,6 +19,7 @@ import fr.nathan818.azplugin.common.utils.java.CollectionsUtil;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Predicate;
+import java.util.logging.Level;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +30,8 @@ import pactify.client.api.plsp.packet.client.PLSPPacketPlayerMeta;
 
 public abstract class AZEntityTrait implements AZEntity {
 
+    private @Nullable AZEntityScale effectiveScale;
+    private @Nullable AZEntityModel effectiveModel;
     private final EntityMetaScale scaleMeta = new EntityMetaScale();
     private final EntityMetaModel modelMeta = new EntityMetaModel();
     private final EntityMetaNameTag nameTagMeta = new EntityMetaNameTag(PLSPPacketAbstractMeta::setTag);
@@ -81,6 +85,43 @@ public abstract class AZEntityTrait implements AZEntity {
     }
 
     @Override
+    public @Nullable AZEntityScale getEffectiveScale() {
+        return effectiveScale;
+    }
+
+    private void setEffectiveScale(@Nullable AZNetworkValue<AZEntityScale> netScale) {
+        AZEntityScale scale;
+        try {
+            scale = (netScale == null) ? null : netScale.get(() -> null);
+        } catch (Exception ex) {
+            log(Level.WARNING, "Exception getting effective scale for {0}", self(), ex);
+            scale = null;
+        }
+        effectiveScale = scale;
+        if (scale == null) {
+            compat().setBboxScale(getBukkitEntity(), 1.0F, 1.0F);
+        } else {
+            compat().setBboxScale(getBukkitEntity(), scale.getBboxWidth(), scale.getBboxHeight());
+        }
+    }
+
+    @Override
+    public @Nullable AZEntityModel getEffectiveModel() {
+        return effectiveModel;
+    }
+
+    private void setEffectiveModel(@Nullable AZNetworkValue<AZEntityModel> netModel) {
+        AZEntityModel model;
+        try {
+            model = (netModel == null) ? null : netModel.get(() -> null);
+        } catch (Exception ex) {
+            log(Level.WARNING, "Exception getting effective model for {0}", self(), ex);
+            model = null;
+        }
+        this.effectiveModel = model;
+    }
+
+    @Override
     public @Nullable AZNetworkValue<AZEntityScale> getScale() {
         return scaleMeta.get();
     }
@@ -92,6 +133,7 @@ public abstract class AZEntityTrait implements AZEntity {
         if (!scaleMeta.set(scale)) {
             return;
         }
+        setEffectiveScale(scale);
         Bukkit.getPluginManager().callEvent(new AZEntityScaleChangedEvent(self(), oldScale, scale));
         if (flush) {
             flushMeta(scaleMeta, getViewers(true), false);
@@ -116,6 +158,7 @@ public abstract class AZEntityTrait implements AZEntity {
         if (!modelMeta.set(model)) {
             return;
         }
+        setEffectiveModel(model);
         Bukkit.getPluginManager().callEvent(new AZEntityModelChangedEvent(self(), oldModel, model));
         if (flush) {
             flushMeta(modelMeta, getViewers(true), false);

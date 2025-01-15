@@ -1,21 +1,28 @@
 package fr.nathan818.azplugin.bukkit.plugin.entity;
 
 import static fr.nathan818.azplugin.bukkit.AZBukkitShortcuts.az;
+import static fr.nathan818.azplugin.bukkit.compat.BukkitCompat.compat;
 
 import fr.nathan818.azplugin.bukkit.AZBukkit;
+import fr.nathan818.azplugin.bukkit.compat.agent.CompatBridge;
 import fr.nathan818.azplugin.bukkit.compat.event.EntityTrackBeginEvent;
 import fr.nathan818.azplugin.bukkit.entity.AZEntity;
 import fr.nathan818.azplugin.bukkit.entity.AZPlayer;
 import fr.nathan818.azplugin.bukkit.plugin.AZPlugin;
+import fr.nathan818.azplugin.common.appearance.AZEntityModel;
+import fr.nathan818.azplugin.common.appearance.AZEntityScale;
 import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.scheduler.BukkitScheduler;
+import org.jetbrains.annotations.NotNull;
 
 @RequiredArgsConstructor
 public class EntityManager implements Listener {
@@ -23,6 +30,8 @@ public class EntityManager implements Listener {
     private final AZPlugin plugin;
 
     public void register() {
+        CompatBridge.callEntityTrackBeginEventFunction = EntityManager::callEntityTrackBeginEvent;
+        CompatBridge.getHeadHeightFunction = EntityManager::getHeadHeight;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         // TODO: reload all entities
     }
@@ -53,5 +62,37 @@ public class EntityManager implements Listener {
         if (azEntity != null) {
             azEntity.flushAllMetadata(Collections.singleton(event.getViewer()), true);
         }
+    }
+
+    public static void callEntityTrackBeginEvent(@NotNull Entity entity, @NotNull Player viewer) {
+        Bukkit.getPluginManager().callEvent(new EntityTrackBeginEvent(entity, viewer));
+    }
+
+    public static float getHeadHeight(@NotNull Entity entity, float unscaledHeadHeight) {
+        AZEntity azEntity = AZBukkit.api().getEntityIfPresent(entity);
+        if (azEntity == null) {
+            return unscaledHeadHeight;
+        }
+        AZEntityModel model = azEntity.getEffectiveModel();
+        if (model != null) {
+            float modelUnscaledHeadHeight;
+            if (compat().isElytraFlying(entity)) {
+                modelUnscaledHeadHeight = model.getEyeHeightElytra();
+            } else if (compat().isSleeping(entity)) {
+                modelUnscaledHeadHeight = model.getEyeHeightSleep();
+            } else if (compat().isSneaking(entity)) {
+                modelUnscaledHeadHeight = model.getEyeHeightSneak();
+            } else {
+                modelUnscaledHeadHeight = model.getEyeHeightStand();
+            }
+            if (!Float.isNaN(modelUnscaledHeadHeight)) {
+                unscaledHeadHeight = modelUnscaledHeadHeight;
+            }
+        }
+        AZEntityScale scale = azEntity.getEffectiveScale();
+        if (scale != null) {
+            return unscaledHeadHeight * scale.getRenderHeight();
+        }
+        return unscaledHeadHeight;
     }
 }

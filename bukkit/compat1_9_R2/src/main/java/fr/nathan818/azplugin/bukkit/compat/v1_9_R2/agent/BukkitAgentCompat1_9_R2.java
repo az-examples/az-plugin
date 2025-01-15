@@ -58,6 +58,7 @@ public class BukkitAgentCompat1_9_R2 {
             "net/minecraft/server/v1_9_R2/EntityTrackerEntry",
             BukkitAgentCompat1_9_R2::insertEntityTrackEventCalls
         );
+        EntityScaleTransformer1_9_R2.register(agent, compatBridge);
     }
 
     private static AddEnumConstantTransformer.InitializerGenerator initEnumToolMaterial(

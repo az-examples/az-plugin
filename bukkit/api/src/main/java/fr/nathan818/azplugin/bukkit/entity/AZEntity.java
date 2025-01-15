@@ -24,6 +24,12 @@ public interface AZEntity {
     boolean isViewer(@NotNull Player other);
 
     @Nullable
+    AZEntityScale getEffectiveScale();
+
+    @Nullable
+    AZEntityModel getEffectiveModel();
+
+    @Nullable
     AZNetworkValue<AZEntityScale> getScale();
 
     default void setScale(@Nullable AZEntityScale scale) {

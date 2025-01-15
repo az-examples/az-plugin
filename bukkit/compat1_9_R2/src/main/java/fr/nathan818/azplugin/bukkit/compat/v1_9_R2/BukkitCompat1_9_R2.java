@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.function.Supplier;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import net.minecraft.server.v1_9_R2.EntityLiving;
 import net.minecraft.server.v1_9_R2.EntityPlayer;
 import net.minecraft.server.v1_9_R2.EntityTrackerEntry;
 import net.minecraft.server.v1_9_R2.NBTTagCompound;
@@ -134,5 +135,22 @@ public class BukkitCompat1_9_R2 implements BukkitCompat {
             return value;
         }
         return null;
+    }
+
+    @Override
+    public boolean isSneaking(@NotNull Entity entity) {
+        net.minecraft.server.v1_9_R2.Entity nmsEntity = ((CraftEntity) entity).getHandle();
+        return nmsEntity.isSneaking();
+    }
+
+    @Override
+    public boolean isElytraFlying(@NotNull Entity entity) {
+        net.minecraft.server.v1_9_R2.Entity nmsEntity = ((CraftEntity) entity).getHandle();
+        return nmsEntity instanceof EntityLiving && ((EntityLiving) nmsEntity).cC();
+    }
+
+    @Override
+    public void setBboxScale(@NotNull Entity entity, float width, float height) {
+        CompatBridge1_9_R2.setBboxScale((CraftEntity) entity, width, height);
     }
 }

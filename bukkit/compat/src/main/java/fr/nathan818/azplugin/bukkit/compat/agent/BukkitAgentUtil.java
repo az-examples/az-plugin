@@ -26,7 +26,10 @@ public class BukkitAgentUtil {
 
     public static void registerCommon(Agent agent) {
         agent.addClassToPreload("fr/nathan818/azplugin/bukkit/compat/agent/CompatBridge");
-        agent.addClassToPreload("fr/nathan818/azplugin/bukkit/compat/event/EntityTrackBeginEvent");
+        agent.addClassToPreload(
+            "fr/nathan818/azplugin/bukkit/compat/agent/CompatBridge$CallEntityTrackBeginEventFunction"
+        );
+        agent.addClassToPreload("fr/nathan818/azplugin/bukkit/compat/agent/CompatBridge$GetHeadHeightFunction");
         BukkitMaterialTransformers.register(agent);
     }
 
