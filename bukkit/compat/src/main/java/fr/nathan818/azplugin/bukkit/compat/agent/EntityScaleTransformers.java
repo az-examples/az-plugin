@@ -91,30 +91,78 @@ public class EntityScaleTransformers {
                         String[] exceptions
                     ) {
                         if ("setSize".equals(name) && "(FF)V".equals(descriptor)) {
-                            // Rename setSize to setSizeScaled
-                            return super.visitMethod(access, "setSizeScaled", descriptor, signature, exceptions);
+                            // Rename setSize to setSizeInternal
+                            return super.visitMethod(access, "setSizeInternal", descriptor, signature, exceptions);
                         }
                         return super.visitMethod(access, name, descriptor, signature, exceptions);
                     }
 
                     @Override
                     public void visitEnd() {
-                        visitField(Opcodes.ACC_PUBLIC, "bboxScaled", "Z", null, null).visitEnd();
-                        visitField(Opcodes.ACC_PUBLIC, "bboxScaleWidth", "F", null, null).visitEnd();
-                        visitField(Opcodes.ACC_PUBLIC, "bboxScaleLength", "F", null, null).visitEnd();
-                        visitField(Opcodes.ACC_PUBLIC, "unscaledWidth", "F", null, 0.6F).visitEnd();
-                        visitField(Opcodes.ACC_PUBLIC, "unscaledLength", "F", null, 1.8F).visitEnd();
+                        visitField(Opcodes.ACC_PRIVATE, "bboxScaled", "Z", null, null).visitEnd();
+                        visitField(Opcodes.ACC_PRIVATE, "bboxScaleWidth", "F", null, null).visitEnd();
+                        visitField(Opcodes.ACC_PRIVATE, "bboxScaleLength", "F", null, null).visitEnd();
+                        visitField(Opcodes.ACC_PRIVATE, "unscaledWidth", "F", null, 0.6F).visitEnd();
+                        visitField(Opcodes.ACC_PRIVATE, "unscaledLength", "F", null, 1.8F).visitEnd();
+
+                        // public float getUnscaledLength() {
+                        //   if (this.bboxScaled) {
+                        //     return this.unscaledLength;
+                        //   } else {
+                        //     return this.length;
+                        //   }
+                        // }
+                        GeneratorAdapter mg = generateMethod(
+                            cv,
+                            Opcodes.ACC_PUBLIC,
+                            "getUnscaledLength",
+                            Type.FLOAT_TYPE,
+                            NO_ARGS
+                        );
+                        mg.loadThis();
+                        mg.getField(Type.getObjectType(className), "bboxScaled", Type.BOOLEAN_TYPE);
+                        Label elseLabel = mg.newLabel();
+                        mg.ifZCmp(Opcodes.IFEQ, elseLabel);
+                        mg.loadThis();
+                        mg.getField(Type.getObjectType(className), "unscaledLength", Type.FLOAT_TYPE);
+                        mg.returnValue();
+                        mg.mark(elseLabel);
+                        mg.loadThis();
+                        mg.getField(Type.getObjectType(className), "length", Type.FLOAT_TYPE);
+                        mg.returnValue();
+                        mg.endMethod();
+
+                        // public float getUnscaledWidth() {
+                        //   if (this.bboxScaled) {
+                        //     return this.unscaledWidth;
+                        //   } else {
+                        //     return this.width;
+                        //   }
+                        // }
+                        mg = generateMethod(cv, Opcodes.ACC_PUBLIC, "getUnscaledWidth", Type.FLOAT_TYPE, NO_ARGS);
+                        mg.loadThis();
+                        mg.getField(Type.getObjectType(className), "bboxScaled", Type.BOOLEAN_TYPE);
+                        elseLabel = mg.newLabel();
+                        mg.ifZCmp(Opcodes.IFEQ, elseLabel);
+                        mg.loadThis();
+                        mg.getField(Type.getObjectType(className), "unscaledWidth", Type.FLOAT_TYPE);
+                        mg.returnValue();
+                        mg.mark(elseLabel);
+                        mg.loadThis();
+                        mg.getField(Type.getObjectType(className), "width", Type.FLOAT_TYPE);
+                        mg.returnValue();
+                        mg.endMethod();
 
                         // public void setSize(float arg0, float arg1) {
                         //   this.unscaledWidth = arg0;
                         //   this.unscaledLength = arg1;
                         //   if (!bboxScaled) {
-                        //     this.setSizeScaled(arg0, arg1);
+                        //     this.setSizeInternal(arg0, arg1);
                         //   } else {
-                        //     this.setSizeScaled(arg0 * this.bboxScaleWidth, arg1 * this.bboxScaleLength);
+                        //     this.setSizeInternal(arg0 * this.bboxScaleWidth, arg1 * this.bboxScaleLength);
                         //   }
                         // }
-                        GeneratorAdapter mg = generateMethod(
+                        mg = generateMethod(
                             cv,
                             Opcodes.ACC_PUBLIC,
                             "setSize",
@@ -130,14 +178,14 @@ public class EntityScaleTransformers {
                         mg.loadArg(1);
                         mg.putField(Type.getObjectType(className), "unscaledLength", Type.FLOAT_TYPE);
 
-                        Label elseLabel = mg.newLabel();
+                        elseLabel = mg.newLabel();
                         mg.loadThis();
                         mg.getField(Type.getObjectType(className), "bboxScaled", Type.BOOLEAN_TYPE);
                         mg.ifZCmp(Opcodes.IFNE, elseLabel);
                         mg.loadThis();
                         mg.loadArg(0);
                         mg.loadArg(1);
-                        mg.invokeVirtual(Type.getObjectType(className), new Method("setSizeScaled", "(FF)V"));
+                        mg.invokeVirtual(Type.getObjectType(className), new Method("setSizeInternal", "(FF)V"));
                         mg.returnValue();
                         mg.mark(elseLabel);
                         mg.loadThis();
@@ -149,16 +197,18 @@ public class EntityScaleTransformers {
                         mg.loadThis();
                         mg.getField(Type.getObjectType(className), "bboxScaleLength", Type.FLOAT_TYPE);
                         mg.visitInsn(Opcodes.FMUL);
-                        mg.invokeVirtual(Type.getObjectType(className), new Method("setSizeScaled", "(FF)V"));
+                        mg.invokeVirtual(Type.getObjectType(className), new Method("setSizeInternal", "(FF)V"));
 
                         mg.returnValue();
                         mg.endMethod();
 
                         // public void setBboxScale(float arg0, float arg1) {
+                        //   float unscaledWidth = this.getUnscaledWidth();
+                        //   float unscaledLength = this.getUnscaledLength();
                         //   this.bboxScaled = arg0 != 1.0F || arg1 != 1.0F;
                         //   this.bboxScaleWidth = arg0;
                         //   this.bboxScaleLength = arg1;
-                        //   this.setSizeScaled(this.unscaledWidth * arg0, this.unscaledLength * arg1);
+                        //   this.setSizeInternal(unscaledWidth * arg0, unscaledLength * arg1);
                         // }
                         mg = generateMethod(
                             cv,
@@ -167,6 +217,16 @@ public class EntityScaleTransformers {
                             Type.VOID_TYPE,
                             new Type[] { Type.FLOAT_TYPE, Type.FLOAT_TYPE }
                         );
+
+                        int unscaledWidth = mg.newLocal(Type.FLOAT_TYPE);
+                        mg.loadThis();
+                        mg.invokeVirtual(Type.getObjectType(className), new Method("getUnscaledWidth", "()F"));
+                        mg.storeLocal(unscaledWidth);
+
+                        int unscaledLength = mg.newLocal(Type.FLOAT_TYPE);
+                        mg.loadThis();
+                        mg.invokeVirtual(Type.getObjectType(className), new Method("getUnscaledLength", "()F"));
+                        mg.storeLocal(unscaledLength);
 
                         mg.loadThis();
                         Label elseLabel2 = mg.newLabel();
@@ -193,21 +253,19 @@ public class EntityScaleTransformers {
                         mg.putField(Type.getObjectType(className), "bboxScaleLength", Type.FLOAT_TYPE);
 
                         mg.loadThis();
-                        mg.loadThis();
-                        mg.getField(Type.getObjectType(className), "unscaledWidth", Type.FLOAT_TYPE);
+                        mg.loadLocal(unscaledWidth);
                         mg.loadArg(0);
                         mg.visitInsn(Opcodes.FMUL);
-                        mg.loadThis();
-                        mg.getField(Type.getObjectType(className), "unscaledLength", Type.FLOAT_TYPE);
+                        mg.loadLocal(unscaledLength);
                         mg.loadArg(1);
                         mg.visitInsn(Opcodes.FMUL);
-                        mg.invokeVirtual(Type.getObjectType(className), new Method("setSizeScaled", "(FF)V"));
+                        mg.invokeVirtual(Type.getObjectType(className), new Method("setSizeInternal", "(FF)V"));
 
                         mg.returnValue();
                         mg.endMethod();
 
                         // public float getHeadHeight() {
-                        //   return CompatBridge.getHeadHeight(this.getBukkitEntity(), this.getHeadHeightUnscaled());
+                        //   return CompatBridge.getHeadHeight(this.getBukkitEntity(), this.getUnscaledHeadHeight());
                         // }
                         mg = generateMethod(cv, Opcodes.ACC_PUBLIC, "getHeadHeight", Type.FLOAT_TYPE, NO_ARGS);
                         mg.loadThis();
@@ -216,7 +274,7 @@ public class EntityScaleTransformers {
                             new Method("getBukkitEntity", Type.getObjectType(opts.getCraftEntityClass()), NO_ARGS)
                         );
                         mg.loadThis();
-                        mg.invokeVirtual(Type.getObjectType(className), new Method("getHeadHeightUnscaled", "()F"));
+                        mg.invokeVirtual(Type.getObjectType(className), new Method("getUnscaledHeadHeight", "()F"));
                         mg.invokeStatic(
                             Type.getObjectType("fr/nathan818/azplugin/bukkit/compat/agent/CompatBridge"),
                             new Method(
@@ -252,17 +310,24 @@ public class EntityScaleTransformers {
                         String[] exceptions
                     ) {
                         if ("getHeadHeight".equals(name) && "()F".equals(descriptor)) {
-                            // Rename getHeadHeight to getHeadHeightUnscaled
-                            addInfo(cv, className, "Remapped getHeadHeight to getHeadHeightUnscaled");
+                            // Rename getHeadHeight to getUnscaledHeadHeight
+                            addInfo(cv, className, "Remapped getHeadHeight to getUnscaledHeadHeight");
                             return new MethodVisitor(
                                 api,
-                                super.visitMethod(access, "getHeadHeightUnscaled", descriptor, signature, exceptions)
+                                super.visitMethod(access, "getUnscaledHeadHeight", descriptor, signature, exceptions)
                             ) {
                                 @Override
                                 public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
                                     if ("length".equals(name) && opts.getNmsEntityClass().equals(owner)) {
-                                        // Redirect length field access to unscaledLength
-                                        name = "unscaledLength";
+                                        // Redirect length field access to getUnscaledLength()
+                                        super.visitMethodInsn(
+                                            Opcodes.INVOKEVIRTUAL,
+                                            owner,
+                                            "getUnscaledLength",
+                                            "()F",
+                                            false
+                                        );
+                                        return;
                                     }
                                     super.visitFieldInsn(opcode, owner, name, descriptor);
                                 }
