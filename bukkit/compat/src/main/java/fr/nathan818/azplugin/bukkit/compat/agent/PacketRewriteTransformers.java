@@ -101,7 +101,7 @@ public class PacketRewriteTransformers {
                             )
                         ) {
                             // public PacketDataSerializer XXX(ItemStack itemStack) {
-                            //   itemStack = CompatBridgeX.rewriteItemStackOut(this.nmsPlayer, itemStack);
+                            //   itemStack = CompatBridgeXXX.rewriteItemStackOut(this.nmsPlayer, itemStack);
                             //   [...]
                             // }
                             return new GeneratorAdapter(
@@ -146,7 +146,7 @@ public class PacketRewriteTransformers {
                             // public ItemStack XXX() {
                             //   [...]
                             //   [itemStack.setTag(...);]
-                            //   itemStack = CompatBridgeX.rewriteItemStackIn(this.nmsPlayer, itemStack);
+                            //   itemStack = CompatBridgeXXX.rewriteItemStackIn(this.nmsPlayer, itemStack);
                             //   [...]
                             // }
                             return new GeneratorAdapter(

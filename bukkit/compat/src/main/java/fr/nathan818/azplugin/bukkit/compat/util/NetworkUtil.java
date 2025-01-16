@@ -11,7 +11,6 @@ public class NetworkUtil {
 
     public static void injectPlayerInHandlers(ChannelPipeline pipeline, Object nmsPlayer) {
         for (Map.Entry<String, ChannelHandler> e : pipeline) {
-            String name = e.getKey();
             ChannelHandler handler = e.getValue();
             injectPlayerInHandler(handler, nmsPlayer);
         }

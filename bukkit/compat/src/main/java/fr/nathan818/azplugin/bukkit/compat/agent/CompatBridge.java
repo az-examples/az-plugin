@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CompatBridge {
 
-    public static GetHeadHeightFunction getHeadHeightFunction = (entity, unscaledHeadHeight) -> unscaledHeadHeight;
+    public static GetHeadHeightFunction getHeadHeightFunction = GetHeadHeightFunction.DEFAULT;
 
     public static void callEntityTrackBeginEvent(@NotNull Entity entity, @NotNull Player viewer) {
         Bukkit.getPluginManager().callEvent(new EntityTrackBeginEvent(entity, viewer));
@@ -19,6 +19,8 @@ public class CompatBridge {
     }
 
     public interface GetHeadHeightFunction {
+        GetHeadHeightFunction DEFAULT = (entity, unscaledHeadHeight) -> unscaledHeadHeight;
+
         float getHeadHeight(@NotNull Entity entity, float unscaledHeadHeight);
     }
 }

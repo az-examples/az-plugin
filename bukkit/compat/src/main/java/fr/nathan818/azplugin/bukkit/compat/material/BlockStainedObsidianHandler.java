@@ -2,10 +2,12 @@ package fr.nathan818.azplugin.bukkit.compat.material;
 
 import fr.nathan818.azplugin.bukkit.compat.type.BlockState;
 import fr.nathan818.azplugin.bukkit.compat.type.DyeColor;
+import fr.nathan818.azplugin.common.network.AZNetworkContext;
 import lombok.NonNull;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class BlockStainedObsidianHandler extends BlockHandler {
@@ -17,7 +19,10 @@ public class BlockStainedObsidianHandler extends BlockHandler {
     }
 
     @Override
-    public BlockState getFallbackState(int blockData) {
+    public @Nullable BlockState getFallbackState(@NotNull AZNetworkContext ctx, int blockData) {
+        if (ctx.getAZProtocolVersion() >= definition.getSinceProtocolVersion()) {
+            return null;
+        }
         return OBSIDIAN;
     }
 

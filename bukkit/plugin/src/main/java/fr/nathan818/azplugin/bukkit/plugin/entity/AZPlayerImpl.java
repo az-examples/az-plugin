@@ -30,6 +30,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
 import lombok.experimental.Delegate;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
@@ -51,6 +53,8 @@ public class AZPlayerImpl extends AZClientAbstract implements AZPlayer {
 
     @Delegate(types = AZEntity.class)
     private final AZEntityTrait entityTrait;
+
+    private @Getter @Setter int@NonNull[] rewriteBlockOutPalette = new int[0];
 
     private final Map<AZCosmeticEquipment.Slot, EntityMetaCosmeticEquipment> cosmeticEquipmentsMeta = new EnumMap<>(
         AZCosmeticEquipment.Slot.class

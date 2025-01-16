@@ -16,6 +16,7 @@ import fr.nathan818.azplugin.bukkit.compat.type.CollisionMode;
 import fr.nathan818.azplugin.bukkit.compat.type.OptBoolean;
 import fr.nathan818.azplugin.bukkit.compat.type.RayTraceResult;
 import fr.nathan818.azplugin.bukkit.compat.type.Rotation;
+import fr.nathan818.azplugin.common.network.AZNetworkContext;
 import java.util.List;
 import java.util.Random;
 import lombok.NonNull;
@@ -34,7 +35,10 @@ public class BlockHandler {
 
     protected final @NonNull BlockDefinition definition;
 
-    public BlockState getFallbackState(int blockData) {
+    public @Nullable BlockState getFallbackState(@NotNull AZNetworkContext ctx, int blockData) {
+        if (ctx.getAZProtocolVersion() >= definition.getSinceProtocolVersion()) {
+            return null;
+        }
         return STONE;
     }
 

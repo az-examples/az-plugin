@@ -131,6 +131,17 @@ public class BlockDefinitions {
         return (blockId << 4) | data;
     }
 
+    public static int getBlockId(int blockStateId) {
+        if (isAZBlock((blockStateId >> 4) + AZ_BLOCKSTATES_OFFSET)) {
+            return (blockStateId >> 4) + AZ_BLOCKSTATES_OFFSET;
+        }
+        return blockStateId >> 4;
+    }
+
+    public static int getBlockData(int blockStateId) {
+        return blockStateId & 0xF;
+    }
+
     public static void assertItemBlock(@NotNull BlockDefinition block, @NotNull ItemDefinition item) {
         if (!(item.getType() instanceof ItemDefinition.ItemBlock)) {
             throw new IllegalArgumentException("BlockDefinition.item must be an ItemBlock");

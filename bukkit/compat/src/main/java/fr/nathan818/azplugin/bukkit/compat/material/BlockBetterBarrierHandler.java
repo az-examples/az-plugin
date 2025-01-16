@@ -8,6 +8,7 @@ import fr.nathan818.azplugin.bukkit.compat.type.RayTraceResult;
 import fr.nathan818.azplugin.bukkit.compat.type.Rotation;
 import fr.nathan818.azplugin.bukkit.compat.util.BlockPlaceUtil;
 import fr.nathan818.azplugin.bukkit.compat.util.MathUtil;
+import fr.nathan818.azplugin.common.network.AZNetworkContext;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
@@ -166,7 +167,10 @@ public class BlockBetterBarrierHandler extends BlockHandler {
     }
 
     @Override
-    public BlockState getFallbackState(int blockData) {
+    public @Nullable BlockState getFallbackState(@NotNull AZNetworkContext ctx, int blockData) {
+        if (ctx.getAZProtocolVersion() >= definition.getSinceProtocolVersion()) {
+            return null;
+        }
         return BARRIER;
     }
 

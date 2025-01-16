@@ -8,12 +8,15 @@ import fr.nathan818.azplugin.bukkit.compat.type.BoundingBox;
 import fr.nathan818.azplugin.bukkit.compat.type.DyeColor;
 import fr.nathan818.azplugin.bukkit.compat.type.OptBoolean;
 import fr.nathan818.azplugin.bukkit.compat.type.Rotation;
+import fr.nathan818.azplugin.common.network.AZNetworkContext;
 import java.util.Random;
 import lombok.NonNull;
 import org.bukkit.World;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class BlockColoredPortalHandler extends BlockHandler {
 
@@ -55,7 +58,10 @@ public class BlockColoredPortalHandler extends BlockHandler {
     }
 
     @Override
-    public BlockState getFallbackState(int blockData) {
+    public @Nullable BlockState getFallbackState(@NotNull AZNetworkContext ctx, int blockData) {
+        if (ctx.getAZProtocolVersion() >= definition.getSinceProtocolVersion()) {
+            return null;
+        }
         return getAxis(isSecond, blockData) == Axis.Z ? PORTAL_Z : PORTAL_X;
     }
 

@@ -14,15 +14,19 @@ import fr.nathan818.azplugin.bukkit.compat.material.RegisterBlockResult;
 import fr.nathan818.azplugin.bukkit.compat.material.RegisterItemResult;
 import fr.nathan818.azplugin.bukkit.compat.network.BlockRewriter;
 import fr.nathan818.azplugin.bukkit.compat.network.ItemStackRewriter;
+import fr.nathan818.azplugin.bukkit.compat.type.BlockState;
 import fr.nathan818.azplugin.bukkit.entity.AZPlayer;
 import fr.nathan818.azplugin.bukkit.item.ItemStackProxy;
 import fr.nathan818.azplugin.bukkit.plugin.AZPlugin;
+import fr.nathan818.azplugin.bukkit.plugin.entity.AZPlayerImpl;
+import fr.nathan818.azplugin.common.AZClient;
 import fr.nathan818.azplugin.common.network.AZNetworkContext;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
@@ -175,11 +179,36 @@ public class MaterialManager implements Listener, BlockRewriter, ItemStackRewrit
         if (azPlayer == null) {
             return;
         }
+        if (azPlayer instanceof AZPlayerImpl) {
+            ((AZPlayerImpl) azPlayer).setRewriteBlockOutPalette(createRewriteBlockOutPalette(azPlayer));
+        }
         azPlayer.sendPacket(new PLSPPacketAdditionalContent(toShortArray(additionalItemsAndBlocks)));
+    }
+
+    private int@NonNull[] createRewriteBlockOutPalette(@NotNull AZPlayer azPlayer) {
+        int[] palette = new int[8192];
+        for (int blockStateId = 0; blockStateId < palette.length; ++blockStateId) {
+            int blockId = BlockDefinitions.getBlockId(blockStateId);
+            int blockData = BlockDefinitions.getBlockData(blockStateId);
+            BlockHandler handler = blockHandlers.get(blockId);
+            if (handler != null) {
+                BlockState fallback = handler.getFallbackState(azPlayer.getNetworkContext(), blockData);
+                if (fallback != null) {
+                    palette[blockStateId] = BlockDefinitions.computeBlockStateId(fallback.getId(), fallback.getData());
+                    continue;
+                }
+            }
+            palette[blockStateId] = blockStateId;
+        }
+        return palette;
     }
 
     @Override
     public int@NotNull[] getRewriteBlockOutPalette(@NotNull AZNetworkContext ctx) {
+        AZClient azClient = ctx.getViewer();
+        if (azClient instanceof AZPlayerImpl) {
+            return ((AZPlayerImpl) azClient).getRewriteBlockOutPalette();
+        }
         return EMPTY_PALETTE;
     }
 

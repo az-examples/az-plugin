@@ -75,6 +75,7 @@ public class BukkitAgentCompat1_9_R2 {
             opts.nmsEntityPlayerClass("net/minecraft/server/v1_9_R2/EntityPlayer");
             opts.nmsItemStackClass("net/minecraft/server/v1_9_R2/ItemStack");
         });
+        ChunkRewriteTransformers1_9_R2.register(agent);
     }
 
     private static AddEnumConstantTransformer.InitializerGenerator initEnumToolMaterial(

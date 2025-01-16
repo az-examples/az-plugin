@@ -7,6 +7,7 @@ import fr.nathan818.azplugin.bukkit.compat.material.BlockDefinition;
 import fr.nathan818.azplugin.bukkit.compat.material.ItemDefinition;
 import fr.nathan818.azplugin.bukkit.compat.material.RegisterBlockResult;
 import fr.nathan818.azplugin.bukkit.compat.material.RegisterItemResult;
+import fr.nathan818.azplugin.bukkit.compat.network.BlockRewriter;
 import fr.nathan818.azplugin.bukkit.compat.network.ItemStackRewriter;
 import fr.nathan818.azplugin.bukkit.compat.network.NettyPacketBuffer;
 import fr.nathan818.azplugin.bukkit.compat.network.PlayerConnection;
@@ -119,6 +120,30 @@ public class BukkitCompat1_9_R2 implements BukkitCompat {
     @Override
     public RegisterItemResult registerItem(@NotNull ItemDefinition definition) {
         return MaterialRegistry1_9_R2.INSTANCE.registerItem(definition);
+    }
+
+    @Override
+    public void registerBlockRewriter(@NotNull BlockRewriter rewriter) {
+        CompatBridge1_9_R2.writeChunkDataFunction = (buf, nmsPlayer, data, complete, sectionsMask) -> {
+            if (sectionsMask == 0) { // No sections -> nothing to rewrite
+                buf.d(data.length);
+                buf.writeBytes(data);
+            } else {
+                AZPlayer player = (nmsPlayer == null) ? null : az(nmsPlayer.getBukkitEntity());
+                int[] rewritePalette = rewriter.getRewriteBlockOutPalette(AZNetworkContext.of(player));
+                PacketDataSerializer dataBuf = new PacketDataSerializer(Unpooled.wrappedBuffer(data));
+                boolean hasSkylight = ChunkCodec1_9_R2.hasSkylight(dataBuf, complete, sectionsMask);
+                ChunkCodec1_9_R2.writeChunkData(buf, dataBuf, complete, sectionsMask, hasSkylight, rewritePalette);
+            }
+        };
+        CompatBridge1_9_R2.rewriteBlockStateFunction = (blockStateId, nmsPlayer) -> {
+            AZPlayer player = (nmsPlayer == null) ? null : az(nmsPlayer.getBukkitEntity());
+            int[] rewritePalette = rewriter.getRewriteBlockOutPalette(AZNetworkContext.of(player));
+            if (blockStateId >= 0 && blockStateId < rewritePalette.length) {
+                return rewritePalette[blockStateId];
+            }
+            return blockStateId;
+        };
     }
 
     @Override
