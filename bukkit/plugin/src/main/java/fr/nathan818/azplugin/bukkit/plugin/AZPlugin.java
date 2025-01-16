@@ -13,6 +13,7 @@ import fr.nathan818.azplugin.bukkit.item.AZBukkitItemStack;
 import fr.nathan818.azplugin.bukkit.plugin.entity.ClientManager;
 import fr.nathan818.azplugin.bukkit.plugin.entity.EntityManager;
 import fr.nathan818.azplugin.bukkit.plugin.material.MaterialManager;
+import fr.nathan818.azplugin.common.item.NotchianItemStackLike;
 import fr.nathan818.azplugin.common.network.AZPacketBuffer;
 import fr.nathan818.azplugin.common.utils.agent.PluginSupport;
 import java.io.Reader;
@@ -89,7 +90,7 @@ public class AZPlugin extends JavaPlugin implements AZBukkitPlatform {
 
     @Override
     public void writeNotchianItemStack(@NotNull AZPacketBuffer buf, @Nullable NotchianItemStack itemStack) {
-        compat().writeItemStack(buf, AZBukkitItemStack.mirrorBukkitItemStack(itemStack));
+        compat().writeItemStack(buf, AZBukkitItemStack.mirrorBukkitItemStack(NotchianItemStackLike.of(itemStack)));
     }
 
     @Override

@@ -32,7 +32,7 @@ public final class AZUiComponent {
 
     public static class Builder {
 
-        public Builder button(@Nullable NotchianChatComponent button) {
+        private Builder button(@Nullable NotchianChatComponent button) {
             this.button = button;
             return this;
         }

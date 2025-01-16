@@ -1,5 +1,7 @@
 package fr.nathan818.azplugin.common.appearance;
 
+import fr.nathan818.azplugin.common.chat.NotchianChatComponentLike;
+import fr.nathan818.azplugin.common.item.NotchianItemStackLike;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -33,6 +35,39 @@ public final class AZCosmeticEquipment {
     private final @Nullable NotchianChatComponent tooltipPrefix;
     private final @Nullable NotchianChatComponent tooltipSuffix;
     private final @Nullable Symbol symbol;
+
+    public static class Builder {
+
+        private Builder item(@Nullable NotchianItemStack item) {
+            this.item = item;
+            return this;
+        }
+
+        public Builder item(@Nullable NotchianItemStackLike item) {
+            this.item = NotchianItemStackLike.convert(item);
+            return this;
+        }
+
+        private Builder tooltipPrefix(@Nullable NotchianChatComponent tooltipPrefix) {
+            this.tooltipPrefix = tooltipPrefix;
+            return this;
+        }
+
+        public Builder tooltipPrefix(@Nullable NotchianChatComponentLike tooltipPrefix) {
+            this.tooltipPrefix = NotchianChatComponentLike.convert(tooltipPrefix);
+            return this;
+        }
+
+        private Builder tooltipSuffix(@Nullable NotchianChatComponent tooltipSuffix) {
+            this.tooltipSuffix = tooltipSuffix;
+            return this;
+        }
+
+        public Builder tooltipSuffix(@Nullable NotchianChatComponentLike tooltipSuffix) {
+            this.tooltipSuffix = NotchianChatComponentLike.convert(tooltipSuffix);
+            return this;
+        }
+    }
 
     @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
     @EqualsAndHashCode(callSuper = false)

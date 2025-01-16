@@ -27,20 +27,15 @@ public interface AZBukkitItemStack extends NotchianItemStack, NotchianItemStackL
     }
 
     @Contract("null -> null; !null -> _")
-    static @Nullable ItemStack mirrorBukkitItemStack(@Nullable NotchianItemStack notchianItemStack) {
-        if (notchianItemStack == null) {
+    static @Nullable ItemStack mirrorBukkitItemStack(@Nullable NotchianItemStackLike notchianItemStack) {
+        NotchianItemStack that = NotchianItemStackLike.convert(notchianItemStack);
+        if (that == null) {
             return null;
         }
-        if (notchianItemStack instanceof AZBukkitItemStack) {
-            return ((AZBukkitItemStack) notchianItemStack).getBukkitItemStack();
+        if (that instanceof AZBukkitItemStack) {
+            return ((AZBukkitItemStack) that).getBukkitItemStack();
         }
-        return AZBukkit.platform()
-            .createItemStack(
-                notchianItemStack.getItemId(),
-                notchianItemStack.getCount(),
-                notchianItemStack.getDamage(),
-                notchianItemStack.getTag()
-            );
+        return AZBukkit.platform().createItemStack(that.getItemId(), that.getCount(), that.getDamage(), that.getTag());
     }
 
     @NotNull

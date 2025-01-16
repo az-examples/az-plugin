@@ -36,7 +36,7 @@ public final class AZPopupAlert {
 
     public static class Builder {
 
-        public Builder description(@NonNull NotchianChatComponent description) {
+        private Builder description(@NotNull NotchianChatComponent description) {
             this.description = description;
             return this;
         }
@@ -46,7 +46,7 @@ public final class AZPopupAlert {
             return this;
         }
 
-        public Builder closeEvent(@Nullable NotchianChatComponent closeEvent) {
+        private Builder closeEvent(@Nullable NotchianChatComponent closeEvent) {
             this.closeEvent = closeEvent;
             return this;
         }

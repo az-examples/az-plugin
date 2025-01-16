@@ -53,7 +53,7 @@ public final class AZChatBehavior {
             return this;
         }
 
-        public Builder message(@Nullable NotchianChatComponent message) {
+        private Builder message(@Nullable NotchianChatComponent message) {
             this.message = message;
             return this;
         }

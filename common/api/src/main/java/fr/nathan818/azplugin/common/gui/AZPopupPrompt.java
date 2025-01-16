@@ -60,7 +60,7 @@ public final class AZPopupPrompt {
 
     public static class Builder {
 
-        public Builder description(@NonNull NotchianChatComponent description) {
+        private Builder description(@NotNull NotchianChatComponent description) {
             this.description = description;
             return this;
         }
@@ -70,7 +70,7 @@ public final class AZPopupPrompt {
             return this;
         }
 
-        public Builder okEvent(@Nullable NotchianChatComponent okEvent) {
+        private Builder okEvent(@Nullable NotchianChatComponent okEvent) {
             this.okEvent = okEvent;
             return this;
         }
@@ -80,7 +80,7 @@ public final class AZPopupPrompt {
             return this;
         }
 
-        public Builder cancelEvent(@Nullable NotchianChatComponent cancelEvent) {
+        private Builder cancelEvent(@Nullable NotchianChatComponent cancelEvent) {
             this.cancelEvent = cancelEvent;
             return this;
         }

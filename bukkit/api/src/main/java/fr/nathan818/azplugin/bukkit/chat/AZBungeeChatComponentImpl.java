@@ -8,7 +8,9 @@ import net.md_5.bungee.api.chat.BaseComponent;
 
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-class AZBungeeChatComponentImpl extends AZBungeeChatComponentAbstract {
+final class AZBungeeChatComponentImpl extends AZBungeeChatComponentAbstract {
+
+    static final AZBungeeChatComponentImpl EMPTY = new AZBungeeChatComponentImpl(new BaseComponent[0]);
 
     private final @NonNull BaseComponent[] bungeeComponent;
 

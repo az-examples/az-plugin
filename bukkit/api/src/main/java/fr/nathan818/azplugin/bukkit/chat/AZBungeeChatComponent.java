@@ -2,7 +2,11 @@ package fr.nathan818.azplugin.bukkit.chat;
 
 import fr.nathan818.azplugin.common.AZConstants;
 import fr.nathan818.azplugin.common.chat.NotchianChatComponentLike;
+import java.util.function.Consumer;
+import lombok.NonNull;
 import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +16,10 @@ import pactify.client.api.mcprotocol.model.NotchianChatComponent;
 import pactify.client.api.mcprotocol.util.NotchianPacketUtil;
 
 public interface AZBungeeChatComponent extends NotchianChatComponent, NotchianChatComponentLike {
+    static @NotNull AZBungeeChatComponent empty() {
+        return AZBungeeChatComponentImpl.EMPTY;
+    }
+
     @Contract("null -> null; !null -> new")
     static @Nullable AZBungeeChatComponent copyOf(@NotNull BaseComponent @Nullable... component) {
         if (component == null) {
@@ -26,6 +34,29 @@ public interface AZBungeeChatComponent extends NotchianChatComponent, NotchianCh
             return null;
         }
         return new AZBungeeChatComponentImpl(component);
+    }
+
+    static @NotNull AZBungeeChatComponent build(@NotNull Consumer<ComponentBuilder> builderConsumer) {
+        ComponentBuilder builder = new ComponentBuilder("");
+        builderConsumer.accept(builder);
+        return mirrorOf(builder.create());
+    }
+
+    static @NotNull AZBungeeChatComponent build(
+        @NonNull String text,
+        @NotNull Consumer<ComponentBuilder> builderConsumer
+    ) {
+        ComponentBuilder builder = new ComponentBuilder(text);
+        builderConsumer.accept(builder);
+        return mirrorOf(builder.create());
+    }
+
+    static @NotNull AZBungeeChatComponent fromLegacyText(@NotNull String text) {
+        return mirrorOf(TextComponent.fromLegacyText(text));
+    }
+
+    static @NotNull AZBungeeChatComponent fromJson(@NotNull String json) {
+        return mirrorOf(ComponentSerializer.parse(json));
     }
 
     @NotNull
