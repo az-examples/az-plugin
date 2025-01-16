@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 
 public final class Agent implements ClassFileTransformer {
 
-    private static final boolean DEBUG = Boolean.getBoolean("fr.nathan818.azplugin.debugAgent");
+    public static final boolean DEBUG = Boolean.getBoolean("fr.nathan818.azplugin.debugAgent");
     private static final String DEBUG_DUMP_DIR = System.getProperty(
         "fr.nathan818.azplugin.debugAgentDumpDir",
         "az-plugin-debug"

@@ -1,8 +1,8 @@
 package fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent;
 
-import java.util.function.BiFunction;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.ItemStack;
+import net.minecraft.server.v1_8_R3.PacketDataSerializer;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -10,14 +10,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class CompatBridge1_8_R3 {
 
-    public static BiFunction<EntityPlayer, ItemStack, ItemStack> rewriteItemStackOutFunction = (
-        nmsPlayer,
-        nmsItemStack
-    ) -> nmsItemStack;
-    public static BiFunction<EntityPlayer, ItemStack, ItemStack> rewriteItemStackInFunction = (
-        nmsPlayer,
-        nmsItemStack
-    ) -> nmsItemStack;
+    public static WriteChunkDataFunction writeChunkDataFunction = WriteChunkDataFunction.DEFAULT;
+    public static RewriteBlockStateFunction rewriteBlockStateFunction = RewriteBlockStateFunction.DEFAULT;
+    public static RewriteItemStackFunction rewriteItemStackOutFunction = RewriteItemStackFunction.DEFAULT;
+    public static RewriteItemStackFunction rewriteItemStackInFunction = RewriteItemStackFunction.DEFAULT;
 
     public static ItemStack getItemStackHandle(CraftItemStack itemStack) {
         throw new UnsupportedOperationException(); // implemented by BukkitAgentCompat1_8_R3
@@ -35,11 +31,64 @@ public class CompatBridge1_8_R3 {
         throw new UnsupportedOperationException(); // implemented by BukkitAgentCompat1_8_R3
     }
 
-    public static ItemStack rewriteItemStackOut(@Nullable EntityPlayer nmsPlayer, @Nullable ItemStack nmsItemStack) {
-        return rewriteItemStackOutFunction.apply(nmsPlayer, nmsItemStack);
+    public static void writeChunkData(
+        @NotNull PacketDataSerializer buf,
+        @Nullable EntityPlayer nmsPlayer,
+        byte[] data,
+        int sectionsMask,
+        boolean complete,
+        boolean prefixLen
+    ) {
+        writeChunkDataFunction.writeChunkData(buf, nmsPlayer, data, sectionsMask, complete, prefixLen);
     }
 
-    public static ItemStack rewriteItemStackIn(@Nullable EntityPlayer nmsPlayer, @Nullable ItemStack nmsItemStack) {
-        return rewriteItemStackInFunction.apply(nmsPlayer, nmsItemStack);
+    public static int rewriteBlockState(int blockStateId, @Nullable EntityPlayer nmsPlayer) {
+        return rewriteBlockStateFunction.rewriteBlockState(blockStateId, nmsPlayer);
+    }
+
+    public static @Nullable ItemStack rewriteItemStackOut(
+        @Nullable EntityPlayer nmsPlayer,
+        @Nullable ItemStack nmsItemStack
+    ) {
+        return rewriteItemStackOutFunction.rewriteItemStack(nmsPlayer, nmsItemStack);
+    }
+
+    public static @Nullable ItemStack rewriteItemStackIn(
+        @Nullable EntityPlayer nmsPlayer,
+        @Nullable ItemStack nmsItemStack
+    ) {
+        return rewriteItemStackInFunction.rewriteItemStack(nmsPlayer, nmsItemStack);
+    }
+
+    public interface WriteChunkDataFunction {
+        WriteChunkDataFunction DEFAULT = (buf, nmsPlayer, data, sectionsMask, complete, prefixLen) -> {
+            if (prefixLen) {
+                buf.a(data);
+            } else {
+                buf.writeBytes(data);
+            }
+        };
+
+        void writeChunkData(
+            @NotNull PacketDataSerializer buf,
+            @Nullable EntityPlayer nmsPlayer,
+            byte[] data,
+            int sectionsMask,
+            boolean complete,
+            boolean prefixLen
+        );
+    }
+
+    public interface RewriteBlockStateFunction {
+        RewriteBlockStateFunction DEFAULT = (blockStateId, nmsPlayer) -> blockStateId;
+
+        int rewriteBlockState(int blockStateId, @Nullable EntityPlayer nmsPlayer);
+    }
+
+    public interface RewriteItemStackFunction {
+        RewriteItemStackFunction DEFAULT = (nmsPlayer, nmsItemStack) -> nmsItemStack;
+
+        @Nullable
+        ItemStack rewriteItemStack(@Nullable EntityPlayer nmsPlayer, @Nullable ItemStack nmsItemStack);
     }
 }

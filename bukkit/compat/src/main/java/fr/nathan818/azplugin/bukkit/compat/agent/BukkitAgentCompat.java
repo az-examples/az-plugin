@@ -16,8 +16,6 @@ public class BukkitAgentCompat {
 
     public static void register(Agent agent) {
         agent.addClassToPreload(COMPAT_BRIDGE);
-        agent.addClassToPreload(COMPAT_BRIDGE + "$CallEntityTrackBeginEventFunction");
-        agent.addClassToPreload(COMPAT_BRIDGE + "$GetHeadHeightFunction");
         BukkitMaterialTransformers.register(agent);
     }
 

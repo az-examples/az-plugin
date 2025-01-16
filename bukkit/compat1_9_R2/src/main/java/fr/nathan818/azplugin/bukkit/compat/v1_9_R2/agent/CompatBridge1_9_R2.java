@@ -35,26 +35,32 @@ public class CompatBridge1_9_R2 {
         @NotNull PacketDataSerializer buf,
         @Nullable EntityPlayer nmsPlayer,
         byte[] data,
-        boolean complete,
-        int sectionsMask
+        int sectionsMask,
+        boolean complete
     ) {
-        writeChunkDataFunction.writeChunkData(buf, nmsPlayer, data, complete, sectionsMask);
+        writeChunkDataFunction.writeChunkData(buf, nmsPlayer, data, sectionsMask, complete);
     }
 
     public static int rewriteBlockState(int blockStateId, @Nullable EntityPlayer nmsPlayer) {
         return rewriteBlockStateFunction.rewriteBlockState(blockStateId, nmsPlayer);
     }
 
-    public static ItemStack rewriteItemStackOut(@Nullable EntityPlayer nmsPlayer, @Nullable ItemStack nmsItemStack) {
+    public static @Nullable ItemStack rewriteItemStackOut(
+        @Nullable EntityPlayer nmsPlayer,
+        @Nullable ItemStack nmsItemStack
+    ) {
         return rewriteItemStackOutFunction.rewriteItemStack(nmsPlayer, nmsItemStack);
     }
 
-    public static ItemStack rewriteItemStackIn(@Nullable EntityPlayer nmsPlayer, @Nullable ItemStack nmsItemStack) {
+    public static @Nullable ItemStack rewriteItemStackIn(
+        @Nullable EntityPlayer nmsPlayer,
+        @Nullable ItemStack nmsItemStack
+    ) {
         return rewriteItemStackInFunction.rewriteItemStack(nmsPlayer, nmsItemStack);
     }
 
     public interface WriteChunkDataFunction {
-        WriteChunkDataFunction DEFAULT = (buf, nmsPlayer, data, complete, sectionsMask) -> {
+        WriteChunkDataFunction DEFAULT = (buf, nmsPlayer, data, sectionsMask, complete) -> {
             buf.d(data.length);
             buf.writeBytes(data);
         };
@@ -63,8 +69,8 @@ public class CompatBridge1_9_R2 {
             @NotNull PacketDataSerializer buf,
             @Nullable EntityPlayer nmsPlayer,
             byte[] data,
-            boolean complete,
-            int sectionsMask
+            int sectionsMask,
+            boolean complete
         );
     }
 

@@ -123,8 +123,8 @@ public class BukkitCompat1_9_R2 implements BukkitCompat {
     }
 
     @Override
-    public void registerBlockRewriter(@NotNull BlockRewriter rewriter) {
-        CompatBridge1_9_R2.writeChunkDataFunction = (buf, nmsPlayer, data, complete, sectionsMask) -> {
+    public void setBlockRewriter(@NotNull BlockRewriter rewriter) {
+        CompatBridge1_9_R2.writeChunkDataFunction = (buf, nmsPlayer, data, sectionsMask, complete) -> {
             if (sectionsMask == 0) { // No sections -> nothing to rewrite
                 buf.d(data.length);
                 buf.writeBytes(data);
@@ -133,7 +133,7 @@ public class BukkitCompat1_9_R2 implements BukkitCompat {
                 int[] rewritePalette = rewriter.getRewriteBlockOutPalette(AZNetworkContext.of(player));
                 PacketDataSerializer dataBuf = new PacketDataSerializer(Unpooled.wrappedBuffer(data));
                 boolean hasSkylight = ChunkCodec1_9_R2.hasSkylight(dataBuf, complete, sectionsMask);
-                ChunkCodec1_9_R2.writeChunkData(buf, dataBuf, complete, sectionsMask, hasSkylight, rewritePalette);
+                ChunkCodec1_9_R2.writeChunkData(buf, dataBuf, sectionsMask, complete, hasSkylight, rewritePalette);
             }
         };
         CompatBridge1_9_R2.rewriteBlockStateFunction = (blockStateId, nmsPlayer) -> {
@@ -147,7 +147,7 @@ public class BukkitCompat1_9_R2 implements BukkitCompat {
     }
 
     @Override
-    public void registerItemStackRewriter(@NotNull ItemStackRewriter rewriter) {
+    public void setItemStackRewriter(@NotNull ItemStackRewriter rewriter) {
         CompatBridge1_9_R2.rewriteItemStackOutFunction = (nmsPlayer, nmsItemStack) -> {
             if (nmsItemStack == null || nmsItemStack.getItem() == null) {
                 return null;

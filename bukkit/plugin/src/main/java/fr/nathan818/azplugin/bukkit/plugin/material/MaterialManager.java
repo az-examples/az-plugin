@@ -56,8 +56,8 @@ public class MaterialManager implements Listener, BlockRewriter, ItemStackRewrit
     private final Map<Integer, ItemHandler> itemHandlers = new HashMap<>();
 
     public void registerMaterials() {
-        compat().registerBlockRewriter(this);
-        compat().registerItemStackRewriter(this);
+        compat().setBlockRewriter(this);
+        compat().setItemStackRewriter(this);
         for (BlockDefinition blockDefinition : BlockDefinitions.BLOCKS) {
             registerBlock(blockDefinition);
         }

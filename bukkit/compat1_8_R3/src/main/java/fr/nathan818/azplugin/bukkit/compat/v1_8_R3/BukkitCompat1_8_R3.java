@@ -7,6 +7,7 @@ import fr.nathan818.azplugin.bukkit.compat.material.BlockDefinition;
 import fr.nathan818.azplugin.bukkit.compat.material.ItemDefinition;
 import fr.nathan818.azplugin.bukkit.compat.material.RegisterBlockResult;
 import fr.nathan818.azplugin.bukkit.compat.material.RegisterItemResult;
+import fr.nathan818.azplugin.bukkit.compat.network.BlockRewriter;
 import fr.nathan818.azplugin.bukkit.compat.network.ItemStackRewriter;
 import fr.nathan818.azplugin.bukkit.compat.network.NettyPacketBuffer;
 import fr.nathan818.azplugin.bukkit.compat.network.PlayerConnection;
@@ -128,7 +129,24 @@ public class BukkitCompat1_8_R3 implements BukkitCompat {
     }
 
     @Override
-    public void registerItemStackRewriter(@NotNull ItemStackRewriter rewriter) {
+    public void setBlockRewriter(@NotNull BlockRewriter rewriter) {
+        CompatBridge1_8_R3.writeChunkDataFunction = (buf, nmsPlayer, data, sectionsMask, complete, prefixLen) -> {
+            AZPlayer player = (nmsPlayer == null) ? null : az(nmsPlayer.getBukkitEntity());
+            int[] rewritePalette = rewriter.getRewriteBlockOutPalette(AZNetworkContext.of(player));
+            ChunkCodec1_8_R3.writeChunkData(buf, data, sectionsMask, complete, prefixLen, rewritePalette);
+        };
+        CompatBridge1_8_R3.rewriteBlockStateFunction = (blockStateId, nmsPlayer) -> {
+            AZPlayer player = (nmsPlayer == null) ? null : az(nmsPlayer.getBukkitEntity());
+            int[] rewritePalette = rewriter.getRewriteBlockOutPalette(AZNetworkContext.of(player));
+            if (blockStateId >= 0 && blockStateId < rewritePalette.length) {
+                return rewritePalette[blockStateId];
+            }
+            return blockStateId;
+        };
+    }
+
+    @Override
+    public void setItemStackRewriter(@NotNull ItemStackRewriter rewriter) {
         CompatBridge1_8_R3.rewriteItemStackOutFunction = (nmsPlayer, nmsItemStack) -> {
             if (nmsItemStack == null || nmsItemStack.getItem() == null) {
                 return null;

@@ -50,7 +50,7 @@ public interface BukkitCompat {
         return null;
     }
 
-    default void registerBlockRewriter(@NotNull BlockRewriter rewriter) {
+    default void setBlockRewriter(@NotNull BlockRewriter rewriter) {
         log(
             Level.WARNING,
             "Unable to register block rewriter {0} when using {1}",
@@ -59,7 +59,7 @@ public interface BukkitCompat {
         );
     }
 
-    default void registerItemStackRewriter(@NotNull ItemStackRewriter rewriter) {
+    default void setItemStackRewriter(@NotNull ItemStackRewriter rewriter) {
         log(
             Level.WARNING,
             "Unable to register item stack rewriter {0} when using {1}",

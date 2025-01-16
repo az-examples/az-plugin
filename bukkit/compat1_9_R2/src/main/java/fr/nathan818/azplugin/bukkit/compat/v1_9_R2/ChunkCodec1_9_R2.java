@@ -11,8 +11,8 @@ public class ChunkCodec1_9_R2 {
     public static void writeChunkData(
         PacketDataSerializer buf,
         PacketDataSerializer data,
-        boolean complete,
         int sectionsMask,
+        boolean complete,
         boolean hasSkylight,
         int[] rewritePalette
     ) {
