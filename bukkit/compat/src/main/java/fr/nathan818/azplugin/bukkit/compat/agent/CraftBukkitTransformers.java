@@ -1,5 +1,6 @@
 package fr.nathan818.azplugin.bukkit.compat.agent;
 
+import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.addField;
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.generateMethod;
 import static fr.nathan818.azplugin.common.utils.asm.AgentClassWriter.addInfo;
 
@@ -85,7 +86,7 @@ public class CraftBukkitTransformers {
                     @Override
                     public void visitEnd() {
                         // Add a public Object field to the holder class
-                        visitField(Opcodes.ACC_PUBLIC, fieldName, "Ljava/lang/Object;", null, null);
+                        addField(cv, Opcodes.ACC_PUBLIC, fieldName, "Ljava/lang/Object;");
                         addInfo(cv, holderClass, "Added field " + fieldName);
                         super.visitEnd();
                     }

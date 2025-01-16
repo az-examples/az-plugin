@@ -1,6 +1,7 @@
 package fr.nathan818.azplugin.bukkit.compat.agent;
 
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.NO_ARGS;
+import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.addField;
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.generateMethod;
 import static fr.nathan818.azplugin.common.utils.asm.AgentClassWriter.addInfo;
 
@@ -99,11 +100,11 @@ public class EntityScaleTransformers {
 
                     @Override
                     public void visitEnd() {
-                        visitField(Opcodes.ACC_PRIVATE, "bboxScaled", "Z", null, null).visitEnd();
-                        visitField(Opcodes.ACC_PRIVATE, "bboxScaleWidth", "F", null, null).visitEnd();
-                        visitField(Opcodes.ACC_PRIVATE, "bboxScaleLength", "F", null, null).visitEnd();
-                        visitField(Opcodes.ACC_PRIVATE, "unscaledWidth", "F", null, 0.6F).visitEnd();
-                        visitField(Opcodes.ACC_PRIVATE, "unscaledLength", "F", null, 1.8F).visitEnd();
+                        addField(cv, Opcodes.ACC_PRIVATE, "bboxScaled", "Z");
+                        addField(cv, Opcodes.ACC_PRIVATE, "bboxScaleWidth", "F");
+                        addField(cv, Opcodes.ACC_PRIVATE, "bboxScaleLength", "F");
+                        addField(cv, Opcodes.ACC_PRIVATE, "unscaledWidth", "F");
+                        addField(cv, Opcodes.ACC_PRIVATE, "unscaledLength", "F");
 
                         // public float getUnscaledLength() {
                         //   if (this.bboxScaled) {

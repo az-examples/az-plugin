@@ -12,6 +12,7 @@ import fr.nathan818.azplugin.common.gui.AZPopupPrompt;
 import fr.nathan818.azplugin.common.gui.AZUiComponent;
 import fr.nathan818.azplugin.common.gui.AZVignette;
 import fr.nathan818.azplugin.common.item.NotchianItemStackLike;
+import fr.nathan818.azplugin.common.network.AZNetworkContext;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,6 +65,8 @@ public interface AZClient {
     void executeInNetworkThread(@NotNull Runnable task);
 
     <T> @NotNull CompletableFuture<T> executeInNetworkThread(@NotNull Callable<? extends T> task);
+
+    AZNetworkContext getNetworkContext();
 
     boolean sendPacket(@NotNull PLSPPacket<PLSPPacketHandler.ClientHandler> packet);
 

@@ -2,13 +2,18 @@ package fr.nathan818.azplugin.common.network;
 
 import fr.nathan818.azplugin.common.AZClient;
 import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+@Getter
 final class AZNetworkContextEmpty implements AZNetworkContext {
 
-    static final AZNetworkContext INSTANCE = new AZNetworkContextEmpty();
+    static final AZNetworkContext UNKNOWN = new AZNetworkContextEmpty(false);
+    static final AZNetworkContext EFFECTIVE = new AZNetworkContextEmpty(true);
+
+    private final boolean effective;
 
     @Override
     public @Nullable AZClient getViewer() {

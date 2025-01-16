@@ -17,6 +17,9 @@ import org.bukkit.inventory.ItemStack;
 
 public class BlockColoredPortalHandler extends BlockHandler {
 
+    private static final BlockState PORTAL_X = new BlockState(90, 1);
+    private static final BlockState PORTAL_Z = new BlockState(90, 2);
+
     private static final BoundingBox BBOX_X = BoundingBox.of(0.0D, 0.0D, 0.375D, 1.0D, 1.0D, 0.625D);
     private static final BoundingBox BBOX_Z = BoundingBox.of(0.375D, 0.0D, 0.0D, 0.625D, 1.0D, 1.0D);
 
@@ -49,6 +52,11 @@ public class BlockColoredPortalHandler extends BlockHandler {
     public BlockColoredPortalHandler(@NonNull BlockDefinition definition) {
         super(definition);
         isSecond = isSecond(definition);
+    }
+
+    @Override
+    public BlockState getFallbackState(int blockData) {
+        return getAxis(isSecond, blockData) == Axis.Z ? PORTAL_Z : PORTAL_X;
     }
 
     @Override

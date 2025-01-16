@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 public class BlockDefinitions {
 
     public static final BlockDefinition COLORED_PORTAL = BlockDefinition.builder()
+        .sinceProtocolVersion(1)
         .id(3072)
         .bukkitName("COLORED_PORTAL")
         .minecraftName("colored_portal")
@@ -41,6 +42,7 @@ public class BlockDefinitions {
         .build();
 
     public static final BlockDefinition BETTER_BARRIER = BlockDefinition.builder()
+        .sinceProtocolVersion(8)
         .id(3076)
         .bukkitName("BETTER_BARRIER")
         .minecraftName("better_barrier")
@@ -80,6 +82,7 @@ public class BlockDefinitions {
         .build();
 
     public static final BlockDefinition STAINED_OBSIDIAN = BlockDefinition.builder()
+        .sinceProtocolVersion(14)
         .id(3079)
         .bukkitName("STAINED_OBSIDIAN")
         .minecraftName("stained_obsidian")

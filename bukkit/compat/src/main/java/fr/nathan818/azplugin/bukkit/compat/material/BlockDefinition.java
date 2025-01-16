@@ -15,6 +15,8 @@ import org.jetbrains.annotations.Nullable;
 @ToString
 public final class BlockDefinition {
 
+    private final int sinceProtocolVersion;
+
     private final int id;
     private final @NonNull String bukkitName;
     private final @NonNull String minecraftName;
@@ -37,6 +39,7 @@ public final class BlockDefinition {
     private final @NonNull PushReaction pushReaction;
     private final int variantCount;
     private final @NonNull BlockHandler.Constructor handler;
+
     private final @Nullable ItemDefinition item;
 
     public enum SoundType {

@@ -27,7 +27,7 @@ final class AZNetworkValueFixed<T> implements AZNetworkValue<T> {
             return false;
         }
         AZNetworkValue<?> that = (AZNetworkValue<?>) o;
-        return that.isFixed() && Objects.equals(value, that.get(AZNetworkContext.empty()));
+        return that.isFixed() && Objects.equals(value, that.get(AZNetworkContext.unknown()));
     }
 
     @Override

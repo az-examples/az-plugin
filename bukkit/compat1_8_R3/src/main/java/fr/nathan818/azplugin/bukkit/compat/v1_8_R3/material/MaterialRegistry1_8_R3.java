@@ -5,6 +5,9 @@ import static fr.nathan818.azplugin.bukkit.compat.util.ItemUtil.findMaterial;
 import fr.nathan818.azplugin.bukkit.compat.material.BlockDefinition;
 import fr.nathan818.azplugin.bukkit.compat.material.BlockDefinitions;
 import fr.nathan818.azplugin.bukkit.compat.material.ItemDefinition;
+import fr.nathan818.azplugin.bukkit.compat.material.ItemHandler;
+import fr.nathan818.azplugin.bukkit.compat.material.RegisterBlockResult;
+import fr.nathan818.azplugin.bukkit.compat.material.RegisterItemResult;
 import fr.nathan818.azplugin.bukkit.compat.v1_8_R3.Conversions1_8_R3;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -25,8 +28,8 @@ public class MaterialRegistry1_8_R3 {
 
     public static final MaterialRegistry1_8_R3 INSTANCE = new MaterialRegistry1_8_R3();
 
-    public void registerBlock(@NotNull BlockDefinition definition) {
-        Block block = new Block1_8_R3(definition) {
+    public RegisterBlockResult registerBlock(@NotNull BlockDefinition definition) {
+        Block1_8_R3 block = new Block1_8_R3(definition) {
             @Override
             public BlockDefinition getDefinition() {
                 return definition;
@@ -39,70 +42,82 @@ public class MaterialRegistry1_8_R3 {
         }
 
         ItemDefinition itemDefinition = definition.getItem();
+        RegisterItemResult itemResult = null;
         if (itemDefinition != null) {
             BlockDefinitions.assertItemBlock(definition, itemDefinition);
-            Item item = new ItemBlock1_8_R3(block, itemDefinition, (ItemDefinition.ItemBlock) itemDefinition.getType());
-            registerItem(itemDefinition, item);
+            ItemBlock1_8_R3 item = new ItemBlock1_8_R3(
+                block,
+                itemDefinition,
+                (ItemDefinition.ItemBlock) itemDefinition.getType()
+            );
+            itemResult = registerItem(itemDefinition, item, item.getHandler());
         }
+
+        return new RegisterBlockResult(block.getHandler(), itemResult == null ? null : itemResult.getHandler());
     }
 
-    public void registerItem(@NotNull ItemDefinition definition) {
-        Item item;
+    public RegisterItemResult registerItem(@NotNull ItemDefinition definition) {
         if (definition.getType() instanceof ItemDefinition.Armor) {
-            item = createArmor(definition, (ItemDefinition.Armor) definition.getType());
+            return registerArmor(definition, (ItemDefinition.Armor) definition.getType());
         } else if (definition.getType() instanceof ItemDefinition.Sword) {
-            item = createSword(definition, (ItemDefinition.Sword) definition.getType());
+            return registerSword(definition, (ItemDefinition.Sword) definition.getType());
         } else if (definition.getType() instanceof ItemDefinition.Spade) {
-            item = createSpade(definition, (ItemDefinition.Spade) definition.getType());
+            return registerSpade(definition, (ItemDefinition.Spade) definition.getType());
         } else if (definition.getType() instanceof ItemDefinition.Pickaxe) {
-            item = createPickaxe(definition, (ItemDefinition.Pickaxe) definition.getType());
+            return registerPickaxe(definition, (ItemDefinition.Pickaxe) definition.getType());
         } else if (definition.getType() instanceof ItemDefinition.Axe) {
-            item = createAxe(definition, (ItemDefinition.Axe) definition.getType());
+            return registerAxe(definition, (ItemDefinition.Axe) definition.getType());
         } else if (definition.getType() instanceof ItemDefinition.Hoe) {
-            item = createHoe(definition, (ItemDefinition.Hoe) definition.getType());
+            return registerHoe(definition, (ItemDefinition.Hoe) definition.getType());
         } else {
             throw new IllegalArgumentException("Unsupported item type: " + definition.getType().getClass());
         }
-        registerItem(definition, item);
     }
 
-    private void registerItem(ItemDefinition definition, Item item) {
-        item.c(definition.getTranslationKey());
-        Item.REGISTRY.a(definition.getId(), new MinecraftKey(definition.getMinecraftName()), item);
-    }
-
-    private Item createArmor(ItemDefinition definition, ItemDefinition.Armor type) {
+    private RegisterItemResult registerArmor(ItemDefinition definition, ItemDefinition.Armor type) {
         ItemArmor.EnumArmorMaterial material = findMaterial(
             ItemArmor.EnumArmorMaterial.class,
             type.getMaterial(),
             false
         );
-        return new ItemArmor(material, 3, Conversions1_8_R3.toNmsArmorIndex(type.getSlot()));
+        Item item = new ItemArmor(material, 3, Conversions1_8_R3.toNmsArmorIndex(type.getSlot()));
+        return registerItem(definition, item, type.getHandler().create(definition));
     }
 
-    private Item createSword(ItemDefinition definition, ItemDefinition.Sword type) {
+    private RegisterItemResult registerSword(ItemDefinition definition, ItemDefinition.Sword type) {
         Item.EnumToolMaterial material = findMaterial(Item.EnumToolMaterial.class, type.getMaterial(), true);
-        return new ItemSword(material);
+        Item item = new ItemSword(material);
+        return registerItem(definition, item, type.getHandler().create(definition));
     }
 
-    private Item createSpade(ItemDefinition definition, ItemDefinition.Spade type) {
+    private RegisterItemResult registerSpade(ItemDefinition definition, ItemDefinition.Spade type) {
         Item.EnumToolMaterial material = findMaterial(Item.EnumToolMaterial.class, type.getMaterial(), true);
-        return new ItemSpade(material);
+        Item item = new ItemSpade(material);
+        return registerItem(definition, item, type.getHandler().create(definition));
     }
 
-    private Item createPickaxe(ItemDefinition definition, ItemDefinition.Pickaxe type) {
+    private RegisterItemResult registerPickaxe(ItemDefinition definition, ItemDefinition.Pickaxe type) {
         Item.EnumToolMaterial material = findMaterial(Item.EnumToolMaterial.class, type.getMaterial(), true);
-        return new ItemPickaxe(material) {};
+        Item item = new ItemPickaxe(material) {};
+        return registerItem(definition, item, type.getHandler().create(definition));
     }
 
-    private Item createAxe(ItemDefinition definition, ItemDefinition.Axe type) {
+    private RegisterItemResult registerAxe(ItemDefinition definition, ItemDefinition.Axe type) {
         Item.EnumToolMaterial material = findMaterial(Item.EnumToolMaterial.class, type.getMaterial(), true);
         // Note: Attack damages and attack speeds are not supported in 1.8
-        return new ItemAxe(material) {};
+        Item item = new ItemAxe(material) {};
+        return registerItem(definition, item, type.getHandler().create(definition));
     }
 
-    private Item createHoe(ItemDefinition definition, ItemDefinition.Hoe type) {
+    private RegisterItemResult registerHoe(ItemDefinition definition, ItemDefinition.Hoe type) {
         Item.EnumToolMaterial material = findMaterial(Item.EnumToolMaterial.class, type.getMaterial(), true);
-        return new ItemHoe(material);
+        Item item = new ItemHoe(material);
+        return registerItem(definition, item, type.getHandler().create(definition));
+    }
+
+    private RegisterItemResult registerItem(ItemDefinition definition, Item item, ItemHandler handler) {
+        item.c(definition.getTranslationKey());
+        Item.REGISTRY.a(definition.getId(), new MinecraftKey(definition.getMinecraftName()), item);
+        return new RegisterItemResult(handler);
     }
 }

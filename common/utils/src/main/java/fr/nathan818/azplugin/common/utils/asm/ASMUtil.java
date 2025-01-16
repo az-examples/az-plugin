@@ -34,6 +34,14 @@ public class ASMUtil {
         return names;
     }
 
+    public static void addField(ClassVisitor cv, int access, String name, Type type) {
+        addField(cv, access, name, type.getDescriptor());
+    }
+
+    public static void addField(ClassVisitor cv, int access, String name, String descriptor) {
+        cv.visitField(access, name, descriptor, null, null).visitEnd();
+    }
+
     public static Method createConstructor(Type... argumentTypes) {
         return new Method(CONSTRUCTOR_NAME, Type.VOID_TYPE, argumentTypes);
     }
@@ -92,6 +100,10 @@ public class ASMUtil {
 
     public static Method asMethod(GeneratorAdapter mg) {
         return new Method(mg.getName(), mg.getReturnType(), mg.getArgumentTypes());
+    }
+
+    public static boolean matchMethod(String descriptor, Type expectedReturnType, Type... expectedArgumentTypes) {
+        return Type.getMethodDescriptor(expectedReturnType, expectedArgumentTypes).equals(descriptor);
     }
 
     public static void createArray(GeneratorAdapter mg, int[] values) {

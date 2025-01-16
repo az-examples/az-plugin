@@ -1,8 +1,7 @@
 package fr.nathan818.azplugin.bukkit.compat.material;
 
-import static fr.nathan818.azplugin.bukkit.compat.util.HandlerConstants.DEFAULT_ITEM_DATA;
-import static fr.nathan818.azplugin.bukkit.compat.util.HandlerConstants.DEFAULT_TRANSLATION_KEY;
-
+import fr.nathan818.azplugin.bukkit.item.ItemStackProxy;
+import fr.nathan818.azplugin.common.network.AZNetworkContext;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -12,16 +11,10 @@ public class ItemHandler {
 
     protected final @NonNull ItemDefinition definition;
 
-    public int filterData(int itemData) {
-        return DEFAULT_ITEM_DATA;
-    }
+    public void applyFallback(@NotNull AZNetworkContext ctx, @NotNull ItemStackProxy itemStack) {}
 
-    public String getTranslationKey(int itemData) {
-        return DEFAULT_TRANSLATION_KEY;
-    }
-
-    public interface Constructor {
+    public interface Constructor<T extends ItemHandler> {
         @NotNull
-        ItemHandler create(@NotNull ItemDefinition definition);
+        T create(@NotNull ItemDefinition definition);
     }
 }

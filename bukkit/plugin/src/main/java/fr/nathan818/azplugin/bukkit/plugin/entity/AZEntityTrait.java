@@ -92,7 +92,7 @@ public abstract class AZEntityTrait implements AZEntity {
     private void setEffectiveScale(@Nullable AZNetworkValue<AZEntityScale> netScale) {
         AZEntityScale scale;
         try {
-            scale = (netScale == null) ? null : netScale.get(() -> null);
+            scale = (netScale == null) ? null : netScale.get(AZNetworkContext.effective());
         } catch (Exception ex) {
             log(Level.WARNING, "Exception getting effective scale for {0}", self(), ex);
             scale = null;
@@ -113,7 +113,7 @@ public abstract class AZEntityTrait implements AZEntity {
     private void setEffectiveModel(@Nullable AZNetworkValue<AZEntityModel> netModel) {
         AZEntityModel model;
         try {
-            model = (netModel == null) ? null : netModel.get(() -> null);
+            model = (netModel == null) ? null : netModel.get(AZNetworkContext.effective());
         } catch (Exception ex) {
             log(Level.WARNING, "Exception getting effective model for {0}", self(), ex);
             model = null;
@@ -328,7 +328,7 @@ public abstract class AZEntityTrait implements AZEntity {
                 if (azRecipient.isClosed()) {
                     return;
                 }
-                sendFunction.sendPacket(azRecipient, () -> azRecipient, isSelf);
+                sendFunction.sendPacket(azRecipient, azRecipient.getNetworkContext(), isSelf);
             });
         }
     }

@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class BlockBetterBarrierHandler extends BlockHandler {
 
+    private static final BlockState BARRIER = new BlockState(166, 0);
+
     private static final double PANE_LEN = 0.125D;
     private static final double WALL_LEN = 0.5D;
     private static final BoundingBox BBOX_EMPTY = BoundingBox.of(0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D);
@@ -161,6 +163,11 @@ public class BlockBetterBarrierHandler extends BlockHandler {
     public BlockBetterBarrierHandler(@NonNull BlockDefinition definition) {
         super(definition);
         blockIndex = getBlockIndex(definition);
+    }
+
+    @Override
+    public BlockState getFallbackState(int blockData) {
+        return BARRIER;
     }
 
     @Override

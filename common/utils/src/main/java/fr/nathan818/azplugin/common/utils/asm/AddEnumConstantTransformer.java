@@ -2,6 +2,7 @@ package fr.nathan818.azplugin.common.utils.asm;
 
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.CONSTRUCTOR_NAME;
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.STATIC_INITIALIZER_NAME;
+import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.addField;
 import static fr.nathan818.azplugin.common.utils.asm.AgentClassWriter.addInfo;
 
 import java.util.Collection;
@@ -112,15 +113,12 @@ public final class AddEnumConstantTransformer extends ClassVisitor {
             // Define new enum fields
             int ordinal = enumFieldsCount;
             for (EnumConstant enumConstant : enumConstants) {
-                cv
-                    .visitField(
-                        Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_ENUM,
-                        enumConstant.getName(),
-                        enumType.getDescriptor(),
-                        null,
-                        null
-                    )
-                    .visitEnd();
+                addField(
+                    cv,
+                    Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_ENUM,
+                    enumConstant.getName(),
+                    enumType.getDescriptor()
+                );
                 enumConstant.getInitializer().generate(mg, enumType, enumConstant.getName(), ordinal);
                 mg.putStatic(enumType, enumConstant.getName(), enumType);
                 ++ordinal;

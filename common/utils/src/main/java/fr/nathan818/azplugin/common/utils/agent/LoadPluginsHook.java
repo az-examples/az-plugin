@@ -66,7 +66,7 @@ public class LoadPluginsHook {
     private static void initClass(String className) {
         try {
             Class.forName(className, true, Thread.currentThread().getContextClassLoader());
-        } catch (ClassNotFoundException | NoClassDefFoundError ignored) {}
+        } catch (ClassNotFoundException | LinkageError ignored) {}
     }
 
     private static class HookClassTransformer extends ClassVisitor {

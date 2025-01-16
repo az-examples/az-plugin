@@ -30,12 +30,30 @@ public abstract class AZPacketBufferAbstract
     }
 
     @Override
-    public NotchianItemStack readNotchianItemStack() {
+    public AZPacketBuffer writeNotchianChatComponent(NotchianChatComponent chatComponent) {
+        AZ.platform().writeNotchianChatComponent(this, chatComponent);
+        return this;
+    }
+
+    @Override
+    public @Nullable NotchianItemStack readNotchianItemStack() {
         return AZ.platform().readNotchianItemStack(this);
     }
 
     @Override
-    public NotchianNbtTagCompound readNotchianNbtTagCompound() {
+    public @Nullable AZPacketBuffer writeNotchianItemStack(@Nullable NotchianItemStack itemStack) {
+        AZ.platform().writeNotchianItemStack(this, itemStack);
+        return this;
+    }
+
+    @Override
+    public @Nullable NotchianNbtTagCompound readNotchianNbtTagCompound() {
         return AZ.platform().readNotchianNbtTagCompound(this);
+    }
+
+    @Override
+    public @Nullable AZPacketBuffer writeNotchianNbtTagCompound(@Nullable NotchianNbtTagCompound nbtTagCompound) {
+        AZ.platform().writeNotchianNbtTagCompound(this, nbtTagCompound);
+        return this;
     }
 }

@@ -30,7 +30,13 @@ import org.jetbrains.annotations.Nullable;
 @RequiredArgsConstructor
 public class BlockHandler {
 
+    private static final BlockState STONE = new BlockState(1, 0);
+
     protected final @NonNull BlockDefinition definition;
+
+    public BlockState getFallbackState(int blockData) {
+        return STONE;
+    }
 
     @Nullable
     public BlockDefinition.MaterialColor getMaterialColor(int blockData) {

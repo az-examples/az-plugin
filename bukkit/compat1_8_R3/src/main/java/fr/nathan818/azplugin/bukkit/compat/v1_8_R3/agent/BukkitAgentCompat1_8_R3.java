@@ -8,6 +8,7 @@ import static fr.nathan818.azplugin.bukkit.compat.agent.NMSMaterialTransformers.
 import static fr.nathan818.azplugin.bukkit.compat.material.NMSMaterialDefinitions.ARMOR_MATERIALS;
 import static fr.nathan818.azplugin.bukkit.compat.material.NMSMaterialDefinitions.TOOL_MATERIALS;
 
+import fr.nathan818.azplugin.bukkit.compat.agent.PacketRewriteTransformers;
 import fr.nathan818.azplugin.bukkit.compat.material.NMSArmorMaterialDefinition;
 import fr.nathan818.azplugin.bukkit.compat.material.NMSToolMaterialDefinition;
 import fr.nathan818.azplugin.common.utils.agent.Agent;
@@ -55,6 +56,16 @@ public class BukkitAgentCompat1_8_R3 {
             opts.compatBridgeClass(COMPAT_BRIDGE1_8_R3);
             opts.nmsEntityClass("net/minecraft/server/v1_8_R3/Entity");
             opts.craftEntityClass("org/bukkit/craftbukkit/v1_8_R3/entity/CraftEntity");
+        });
+        PacketRewriteTransformers.register(agent, opts -> {
+            opts.compatBridgeClass(COMPAT_BRIDGE1_8_R3);
+            opts.nmsPacketDataSerializerClass("net/minecraft/server/v1_8_R3/PacketDataSerializer");
+            opts.writeItemStackMethod("a");
+            opts.readItemStackMethod("i");
+            opts.nmsPacketEncoderClass("net/minecraft/server/v1_8_R3/PacketEncoder");
+            opts.nmsPacketDecoderClass("net/minecraft/server/v1_8_R3/PacketDecoder");
+            opts.nmsEntityPlayerClass("net/minecraft/server/v1_8_R3/EntityPlayer");
+            opts.nmsItemStackClass("net/minecraft/server/v1_8_R3/ItemStack");
         });
     }
 

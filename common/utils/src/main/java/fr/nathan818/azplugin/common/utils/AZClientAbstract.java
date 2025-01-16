@@ -11,6 +11,7 @@ import static fr.nathan818.azplugin.common.AZPlatform.log;
 import fr.nathan818.azplugin.common.AZClient;
 import fr.nathan818.azplugin.common.appearance.AZWorldEnv;
 import fr.nathan818.azplugin.common.gui.AZVignette;
+import fr.nathan818.azplugin.common.network.AZNetworkContext;
 import fr.nathan818.azplugin.common.network.AZPacketBuffer;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
@@ -40,6 +41,7 @@ public abstract class AZClientAbstract implements AZClient {
 
     protected final int mcProtocolVersion;
     protected final int azProtocolVersion;
+    protected final @Getter AZNetworkContext networkContext = () -> this;
 
     protected final Object stateLock = new Object();
 

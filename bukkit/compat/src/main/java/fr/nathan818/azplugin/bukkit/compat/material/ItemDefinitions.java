@@ -9,6 +9,7 @@ import lombok.experimental.UtilityClass;
 public class ItemDefinitions {
 
     public static final ItemDefinition EMERALD_HELMET = ItemDefinition.builder()
+        .sinceProtocolVersion(1)
         .id(768)
         .bukkitName("EMERALD_HELMET")
         .minecraftName("emerald_helmet")
@@ -17,6 +18,7 @@ public class ItemDefinitions {
         .build();
 
     public static final ItemDefinition EMERALD_CHESTPLATE = ItemDefinition.builder()
+        .sinceProtocolVersion(1)
         .id(769)
         .bukkitName("EMERALD_CHESTPLATE")
         .minecraftName("emerald_chestplate")
@@ -25,6 +27,7 @@ public class ItemDefinitions {
         .build();
 
     public static final ItemDefinition EMERALD_LEGGINGS = ItemDefinition.builder()
+        .sinceProtocolVersion(1)
         .id(770)
         .bukkitName("EMERALD_LEGGINGS")
         .minecraftName("emerald_leggings")
@@ -33,6 +36,7 @@ public class ItemDefinitions {
         .build();
 
     public static final ItemDefinition EMERALD_BOOTS = ItemDefinition.builder()
+        .sinceProtocolVersion(1)
         .id(771)
         .bukkitName("EMERALD_BOOTS")
         .minecraftName("emerald_boots")
@@ -41,6 +45,7 @@ public class ItemDefinitions {
         .build();
 
     public static final ItemDefinition EMERALD_SWORD = ItemDefinition.builder()
+        .sinceProtocolVersion(1)
         .id(772)
         .bukkitName("EMERALD_SWORD")
         .minecraftName("emerald_sword")
@@ -49,6 +54,7 @@ public class ItemDefinitions {
         .build();
 
     public static final ItemDefinition EMERALD_SHOVEL = ItemDefinition.builder()
+        .sinceProtocolVersion(1)
         .id(773)
         .bukkitName("EMERALD_SHOVEL")
         .minecraftName("emerald_shovel")
@@ -57,6 +63,7 @@ public class ItemDefinitions {
         .build();
 
     public static final ItemDefinition EMERALD_PICKAXE = ItemDefinition.builder()
+        .sinceProtocolVersion(1)
         .id(774)
         .bukkitName("EMERALD_PICKAXE")
         .minecraftName("emerald_pickaxe")
@@ -65,6 +72,7 @@ public class ItemDefinitions {
         .build();
 
     public static final ItemDefinition EMERALD_AXE = ItemDefinition.builder()
+        .sinceProtocolVersion(1)
         .id(775)
         .bukkitName("EMERALD_AXE")
         .minecraftName("emerald_axe")
@@ -73,6 +81,7 @@ public class ItemDefinitions {
         .build();
 
     public static final ItemDefinition EMERALD_HOE = ItemDefinition.builder()
+        .sinceProtocolVersion(1)
         .id(776)
         .bukkitName("EMERALD_HOE")
         .minecraftName("emerald_hoe")

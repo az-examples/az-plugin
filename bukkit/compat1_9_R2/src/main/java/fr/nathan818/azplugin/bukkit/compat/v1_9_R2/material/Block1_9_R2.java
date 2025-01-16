@@ -26,6 +26,7 @@ import fr.nathan818.azplugin.bukkit.compat.type.RayTraceResult;
 import fr.nathan818.azplugin.bukkit.compat.v1_9_R2.Conversions1_9_R2;
 import java.util.List;
 import java.util.Random;
+import lombok.Getter;
 import net.minecraft.server.v1_9_R2.AxisAlignedBB;
 import net.minecraft.server.v1_9_R2.Block;
 import net.minecraft.server.v1_9_R2.BlockPosition;
@@ -49,7 +50,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class Block1_9_R2 extends Block {
 
-    private final BlockHandler handler;
+    private final @Getter BlockHandler handler;
     private final MaterialMapColor materialColor;
     private final EnumPistonReaction pushReaction;
     private IBlockState<Integer> variantProperty;

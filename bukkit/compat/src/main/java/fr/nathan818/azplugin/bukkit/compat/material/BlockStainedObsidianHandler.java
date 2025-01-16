@@ -1,5 +1,6 @@
 package fr.nathan818.azplugin.bukkit.compat.material;
 
+import fr.nathan818.azplugin.bukkit.compat.type.BlockState;
 import fr.nathan818.azplugin.bukkit.compat.type.DyeColor;
 import lombok.NonNull;
 import org.bukkit.Material;
@@ -9,8 +10,15 @@ import org.jetbrains.annotations.Nullable;
 
 public class BlockStainedObsidianHandler extends BlockHandler {
 
+    private static final BlockState OBSIDIAN = new BlockState(49, 0);
+
     public BlockStainedObsidianHandler(@NonNull BlockDefinition definition) {
         super(definition);
+    }
+
+    @Override
+    public BlockState getFallbackState(int blockData) {
+        return OBSIDIAN;
     }
 
     @Override

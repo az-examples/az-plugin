@@ -104,7 +104,7 @@ public class ClientManager implements Listener {
 
     private void onPlayerJoin(Player player) {
         AZPlayerImpl azPlayer = clients.get(player);
-        PlayerConnection playerConnection = compat().getPlayerConnection(player);
+        PlayerConnection playerConnection = compat().initPlayerConnection(player);
         azPlayer.setPlayerConnection(playerConnection);
     }
 

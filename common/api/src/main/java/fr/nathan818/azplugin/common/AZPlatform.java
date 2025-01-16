@@ -1,6 +1,6 @@
 package fr.nathan818.azplugin.common;
 
-import fr.nathan818.azplugin.common.network.AZPacketBufferAbstract;
+import fr.nathan818.azplugin.common.network.AZPacketBuffer;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.logging.Level;
@@ -12,6 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import pactify.client.api.mcprotocol.model.NotchianChatComponent;
 import pactify.client.api.mcprotocol.model.NotchianItemStack;
 import pactify.client.api.mcprotocol.model.NotchianNbtTagCompound;
+import pactify.client.api.mcprotocol.model.SimpleNotchianChatComponent;
+import pactify.client.api.mcprotocol.model.SimpleNotchianItemStack;
 
 public interface AZPlatform<Player, Client extends AZClient> {
     @Contract(pure = true)
@@ -27,22 +29,36 @@ public interface AZPlatform<Player, Client extends AZClient> {
         throw new UnsupportedOperationException("Platform does not support parsing JSON");
     }
 
-    @Nullable
-    default NotchianChatComponent readNotchianChatComponent(AZPacketBufferAbstract buf) {
+    default NotchianChatComponent readNotchianChatComponent(@NotNull AZPacketBuffer buf) {
         // TODO: Use AZ chat API component
-        throw new UnsupportedOperationException("Platform does not support reading NotchianChatComponent");
+        return SimpleNotchianChatComponent.read(buf);
+    }
+
+    default void writeNotchianChatComponent(@NotNull AZPacketBuffer buf, NotchianChatComponent chatComponent) {
+        NotchianChatComponent.write(buf, chatComponent);
     }
 
     @Nullable
-    default NotchianItemStack readNotchianItemStack(AZPacketBufferAbstract buf) {
+    default NotchianItemStack readNotchianItemStack(@NotNull AZPacketBuffer buf) {
         // TODO: Use AZ stack API
-        throw new UnsupportedOperationException("Platform does not support reading NotchianItemStack");
+        return SimpleNotchianItemStack.read(buf);
+    }
+
+    default void writeNotchianItemStack(@NotNull AZPacketBuffer buf, @Nullable NotchianItemStack itemStack) {
+        NotchianItemStack.write(buf, itemStack);
     }
 
     @Nullable
-    default NotchianNbtTagCompound readNotchianNbtTagCompound(AZPacketBufferAbstract buf) {
+    default NotchianNbtTagCompound readNotchianNbtTagCompound(@NotNull AZPacketBuffer buf) {
         // TODO: Use AZ NBT API
         throw new UnsupportedOperationException("Platform does not support reading NotchianNbtTagCompound");
+    }
+
+    default void writeNotchianNbtTagCompound(
+        @NotNull AZPacketBuffer buf,
+        @Nullable NotchianNbtTagCompound nbtTagCompound
+    ) {
+        NotchianNbtTagCompound.write(buf, nbtTagCompound);
     }
 
     @Contract(pure = true)

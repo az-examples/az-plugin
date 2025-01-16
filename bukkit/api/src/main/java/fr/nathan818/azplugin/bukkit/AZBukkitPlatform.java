@@ -17,6 +17,9 @@ public interface AZBukkitPlatform extends AZPlatform<Player, AZPlayer> {
     ItemStack asCraftCopy(@NotNull ItemStack item);
 
     @Nullable
+    ItemStack createItemStack(int itemId, int count, int damage, @Nullable NotchianNbtTagCompound tag);
+
+    @Nullable
     NotchianNbtTagCompound getItemStackTag(@NotNull ItemStack itemStack);
 
     int getActiveContainerWindowId(@NotNull Player bukkitPlayer);

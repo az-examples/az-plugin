@@ -12,7 +12,7 @@ public interface AZNetworkValue<T> {
     }
 
     static <T> @Nullable T getFixed(@Nullable AZNetworkValue<T> value) {
-        return (value == null || !value.isFixed()) ? null : value.get(AZNetworkContext.empty());
+        return (value == null || !value.isFixed()) ? null : value.get(AZNetworkContext.unknown());
     }
 
     @Nullable

@@ -1,10 +1,7 @@
 package fr.nathan818.azplugin.bukkit.compat.v1_9_R2;
 
-import fr.nathan818.azplugin.bukkit.compat.network.NettyPacketBuffer;
 import fr.nathan818.azplugin.bukkit.compat.network.NettyPlayerConnection;
 import fr.nathan818.azplugin.common.network.AZPacketBuffer;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -33,24 +30,14 @@ public class PlayerConnection1_9_R2 extends NettyPlayerConnection {
         @Nullable Consumer<? super @Nullable Throwable> callback
     ) {
         ChannelFuture channelFuture;
-        if (buf instanceof NettyPacketBuffer) {
-            ByteBuf nettyBuf = ((NettyPacketBuffer) buf).getNettyBuffer().retain();
-            try {
-                channelFuture = networkManager.channel.writeAndFlush(
-                    new PacketPlayOutCustomPayload(channel, new PacketDataSerializer(nettyBuf))
-                );
-                channelFuture.addListener(future -> nettyBuf.release());
-            } catch (Throwable ex) {
-                nettyBuf.release();
-                throw ex;
-            }
-        } else {
-            channelFuture = networkManager.channel.writeAndFlush(
-                new PacketPlayOutCustomPayload(
-                    channel,
-                    new PacketDataSerializer(Unpooled.wrappedBuffer(buf.toByteArray()))
-                )
-            );
+        PacketDataSerializer nmsBuf = BukkitCompat1_9_R2.toNMSPacketBuffer(buf);
+        nmsBuf.retain();
+        try {
+            channelFuture = networkManager.channel.writeAndFlush(new PacketPlayOutCustomPayload(channel, nmsBuf));
+            channelFuture.addListener(future -> nmsBuf.release());
+        } catch (Throwable ex) {
+            nmsBuf.release();
+            throw ex;
         }
 
         if (callback != null) {

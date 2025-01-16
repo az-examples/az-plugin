@@ -15,7 +15,6 @@ import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
@@ -30,7 +29,6 @@ public class EntityManager implements Listener {
     private final AZPlugin plugin;
 
     public void register() {
-        CompatBridge.callEntityTrackBeginEventFunction = EntityManager::callEntityTrackBeginEvent;
         CompatBridge.getHeadHeightFunction = EntityManager::getHeadHeight;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         // TODO: reload all entities
@@ -62,10 +60,6 @@ public class EntityManager implements Listener {
         if (azEntity != null) {
             azEntity.flushAllMetadata(Collections.singleton(event.getViewer()), true);
         }
-    }
-
-    public static void callEntityTrackBeginEvent(@NotNull Entity entity, @NotNull Player viewer) {
-        Bukkit.getPluginManager().callEvent(new EntityTrackBeginEvent(entity, viewer));
     }
 
     public static float getHeadHeight(@NotNull Entity entity, float unscaledHeadHeight) {

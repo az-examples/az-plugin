@@ -9,9 +9,11 @@ import fr.nathan818.azplugin.bukkit.AZBukkitAPI;
 import fr.nathan818.azplugin.bukkit.AZBukkitPlatform;
 import fr.nathan818.azplugin.bukkit.agent.Main;
 import fr.nathan818.azplugin.bukkit.compat.BukkitCompat;
+import fr.nathan818.azplugin.bukkit.item.AZBukkitItemStack;
 import fr.nathan818.azplugin.bukkit.plugin.entity.ClientManager;
 import fr.nathan818.azplugin.bukkit.plugin.entity.EntityManager;
 import fr.nathan818.azplugin.bukkit.plugin.material.MaterialManager;
+import fr.nathan818.azplugin.common.network.AZPacketBuffer;
 import fr.nathan818.azplugin.common.utils.agent.PluginSupport;
 import java.io.Reader;
 import java.util.logging.Level;
@@ -21,6 +23,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import pactify.client.api.mcprotocol.model.NotchianItemStack;
 import pactify.client.api.mcprotocol.model.NotchianNbtTagCompound;
 
 public class AZPlugin extends JavaPlugin implements AZBukkitPlatform {
@@ -80,8 +83,36 @@ public class AZPlugin extends JavaPlugin implements AZBukkitPlatform {
     }
 
     @Override
+    public @Nullable NotchianItemStack readNotchianItemStack(@NotNull AZPacketBuffer buf) {
+        return AZBukkitItemStack.mirrorOf(compat().readItemStack(buf));
+    }
+
+    @Override
+    public void writeNotchianItemStack(@NotNull AZPacketBuffer buf, @Nullable NotchianItemStack itemStack) {
+        compat().writeItemStack(buf, AZBukkitItemStack.mirrorBukkitItemStack(itemStack));
+    }
+
+    @Override
+    public @Nullable NotchianNbtTagCompound readNotchianNbtTagCompound(@NotNull AZPacketBuffer buf) {
+        return compat().readNotchianNbtTagCompound(buf);
+    }
+
+    @Override
     public @NotNull ItemStack asCraftCopy(@NotNull ItemStack item) {
         return compat().asCraftCopy(item);
+    }
+
+    @Override
+    public @Nullable ItemStack createItemStack(
+        int itemId,
+        int count,
+        int damage,
+        @Nullable NotchianNbtTagCompound tag
+    ) {
+        if (itemId <= 0) {
+            return null;
+        }
+        return compat().createItemStack(itemId, count, damage, tag);
     }
 
     @Override

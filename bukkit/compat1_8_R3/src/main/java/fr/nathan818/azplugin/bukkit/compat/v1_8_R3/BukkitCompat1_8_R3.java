@@ -1,21 +1,39 @@
 package fr.nathan818.azplugin.bukkit.compat.v1_8_R3;
 
+import static fr.nathan818.azplugin.bukkit.AZBukkitShortcuts.az;
+
 import fr.nathan818.azplugin.bukkit.compat.BukkitCompat;
 import fr.nathan818.azplugin.bukkit.compat.material.BlockDefinition;
 import fr.nathan818.azplugin.bukkit.compat.material.ItemDefinition;
+import fr.nathan818.azplugin.bukkit.compat.material.RegisterBlockResult;
+import fr.nathan818.azplugin.bukkit.compat.material.RegisterItemResult;
+import fr.nathan818.azplugin.bukkit.compat.network.ItemStackRewriter;
+import fr.nathan818.azplugin.bukkit.compat.network.NettyPacketBuffer;
 import fr.nathan818.azplugin.bukkit.compat.network.PlayerConnection;
+import fr.nathan818.azplugin.bukkit.compat.util.CompatAlerts;
+import fr.nathan818.azplugin.bukkit.compat.util.NetworkUtil;
 import fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent.CompatBridge1_8_R3;
 import fr.nathan818.azplugin.bukkit.compat.v1_8_R3.material.MaterialRegistry1_8_R3;
 import fr.nathan818.azplugin.bukkit.entity.AZEntity;
+import fr.nathan818.azplugin.bukkit.entity.AZPlayer;
+import fr.nathan818.azplugin.common.network.AZNetworkContext;
+import fr.nathan818.azplugin.common.network.AZPacketBuffer;
 import fr.nathan818.azplugin.common.utils.java.CollectionsUtil;
+import fr.nathan818.azplugin.common.utils.java.IOConsumer;
+import fr.nathan818.azplugin.common.utils.java.IOFunction;
+import io.netty.buffer.Unpooled;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.function.Supplier;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
 import net.minecraft.server.v1_8_R3.EntityPlayer;
 import net.minecraft.server.v1_8_R3.EntityTrackerEntry;
+import net.minecraft.server.v1_8_R3.Item;
 import net.minecraft.server.v1_8_R3.NBTTagCompound;
 import net.minecraft.server.v1_8_R3.NetworkManager;
+import net.minecraft.server.v1_8_R3.PacketDataSerializer;
 import net.minecraft.server.v1_8_R3.WorldServer;
 import org.bukkit.block.BlockFace;
 import org.bukkit.craftbukkit.v1_8_R3.entity.CraftEntity;
@@ -34,19 +52,108 @@ public class BukkitCompat1_8_R3 implements BukkitCompat {
 
     public static final BukkitCompat1_8_R3 INSTANCE = new BukkitCompat1_8_R3();
 
-    @Override
-    public void registerBlock(@NotNull BlockDefinition definition) {
-        MaterialRegistry1_8_R3.INSTANCE.registerBlock(definition);
+    public static @Nullable ItemStack asCraftItemStack(@Nullable net.minecraft.server.v1_8_R3.ItemStack nmsItemStack) {
+        return nmsItemStack == null ? null : CraftItemStack.asCraftMirror(nmsItemStack);
+    }
+
+    public static @Nullable net.minecraft.server.v1_8_R3.ItemStack asNMSItemStack(@Nullable ItemStack itemStack) {
+        if (itemStack == null) {
+            return null;
+        }
+        if (itemStack instanceof CraftItemStack) {
+            return CompatBridge1_8_R3.getItemStackHandle((CraftItemStack) itemStack);
+        } else {
+            return CraftItemStack.asNMSCopy(CraftItemStack.asCraftCopy(itemStack));
+        }
+    }
+
+    public static @NotNull PacketDataSerializer toNMSPacketBuffer(@NotNull AZPacketBuffer buf) {
+        if (buf instanceof NettyPacketBuffer) {
+            return new PacketDataSerializer(((NettyPacketBuffer) buf).getNettyBuffer());
+        } else {
+            CompatAlerts.nonNettyPacketBufferSend();
+            return new PacketDataSerializer(Unpooled.wrappedBuffer(buf.toByteArray()));
+        }
+    }
+
+    @SneakyThrows(IOException.class)
+    private static <T> T readFromNMSPacketBuffer(
+        @NotNull AZPacketBuffer buf,
+        IOFunction<? super PacketDataSerializer, T> fn
+    ) {
+        if (buf instanceof NettyPacketBuffer) {
+            PacketDataSerializer nmsBuf = new PacketDataSerializer(((NettyPacketBuffer) buf).getNettyBuffer());
+            return fn.apply(nmsBuf);
+        } else {
+            CompatAlerts.nonNettyPacketBufferRead();
+            PacketDataSerializer nmsBuf = new PacketDataSerializer(Unpooled.wrappedBuffer(buf.toByteArray()));
+            T ret = fn.apply(nmsBuf);
+            int bytesRead = nmsBuf.readerIndex();
+            if (bytesRead > 0) {
+                buf.readBytes(new byte[bytesRead]); // TODO: Use skipBytes when available
+            }
+            return ret;
+        }
+    }
+
+    @SneakyThrows(IOException.class)
+    private static void writeToNMSPacketBuffer(
+        @NotNull AZPacketBuffer buf,
+        IOConsumer<? super PacketDataSerializer> fn
+    ) {
+        if (buf instanceof NettyPacketBuffer) {
+            PacketDataSerializer nmsBuf = new PacketDataSerializer(((NettyPacketBuffer) buf).getNettyBuffer());
+            fn.accept(nmsBuf);
+        } else {
+            CompatAlerts.nonNettyPacketBufferWrite();
+            PacketDataSerializer nmsBuf = new PacketDataSerializer(Unpooled.wrappedBuffer(buf.toByteArray()));
+            fn.accept(nmsBuf);
+            int bytesWritten = nmsBuf.writerIndex();
+            if (bytesWritten > 0) {
+                byte[] bytes = new byte[bytesWritten];
+                nmsBuf.readBytes(bytes);
+                buf.writeBytes(bytes);
+            }
+        }
     }
 
     @Override
-    public void registerItem(@NotNull ItemDefinition definition) {
-        MaterialRegistry1_8_R3.INSTANCE.registerItem(definition);
+    public RegisterBlockResult registerBlock(@NotNull BlockDefinition definition) {
+        return MaterialRegistry1_8_R3.INSTANCE.registerBlock(definition);
     }
 
     @Override
-    public @NotNull PlayerConnection getPlayerConnection(@NotNull Player player) {
-        NetworkManager networkManager = ((CraftPlayer) player).getHandle().playerConnection.networkManager;
+    public RegisterItemResult registerItem(@NotNull ItemDefinition definition) {
+        return MaterialRegistry1_8_R3.INSTANCE.registerItem(definition);
+    }
+
+    @Override
+    public void registerItemStackRewriter(@NotNull ItemStackRewriter rewriter) {
+        CompatBridge1_8_R3.rewriteItemStackOutFunction = (nmsPlayer, nmsItemStack) -> {
+            if (nmsItemStack == null || nmsItemStack.getItem() == null) {
+                return null;
+            }
+            AZPlayer player = (nmsPlayer == null) ? null : az(nmsPlayer.getBukkitEntity());
+            ItemStackProxy1_8_R3 proxy = new ItemStackProxy1_8_R3(nmsItemStack, true);
+            rewriter.rewriteItemStackOut(AZNetworkContext.of(player), proxy);
+            return proxy.getForRead();
+        };
+        CompatBridge1_8_R3.rewriteItemStackInFunction = (nmsPlayer, nmsItemStack) -> {
+            if (nmsItemStack == null || nmsItemStack.getItem() == null) {
+                return null;
+            }
+            AZPlayer player = (nmsPlayer == null) ? null : az(nmsPlayer.getBukkitEntity());
+            ItemStackProxy1_8_R3 proxy = new ItemStackProxy1_8_R3(nmsItemStack, false);
+            rewriter.rewriteItemStackOut(AZNetworkContext.of(player), proxy);
+            return proxy.getForRead();
+        };
+    }
+
+    @Override
+    public @NotNull PlayerConnection initPlayerConnection(@NotNull Player player) {
+        EntityPlayer nmsPlayer = ((CraftPlayer) player).getHandle();
+        NetworkManager networkManager = nmsPlayer.playerConnection.networkManager;
+        NetworkUtil.injectPlayerInHandlers(networkManager.channel.pipeline(), nmsPlayer);
         return new PlayerConnection1_8_R3(networkManager);
     }
 
@@ -56,15 +163,60 @@ public class BukkitCompat1_8_R3 implements BukkitCompat {
     }
 
     @Override
-    public @Nullable NotchianNbtTagCompound getItemStackTag(@NotNull ItemStack itemStack) {
-        net.minecraft.server.v1_8_R3.ItemStack nmsItemStack;
-        if (itemStack instanceof CraftItemStack) {
-            nmsItemStack = CompatBridge1_8_R3.getItemStackHandle((CraftItemStack) itemStack);
-        } else {
-            nmsItemStack = CraftItemStack.asNMSCopy(CraftItemStack.asCraftCopy(itemStack));
+    public @Nullable ItemStack createItemStack(
+        int itemId,
+        int count,
+        int damage,
+        @Nullable NotchianNbtTagCompound tag
+    ) {
+        Item item = Item.getById(itemId);
+        if (item == null) {
+            return null;
         }
-        NBTTagCompound tag = (nmsItemStack != null) ? nmsItemStack.getTag() : null;
-        return tag != null ? new NotchianNbtTagCompound1_8_R3(tag) : null;
+        net.minecraft.server.v1_8_R3.ItemStack nmsItemStack = new net.minecraft.server.v1_8_R3.ItemStack(
+            item,
+            count,
+            damage
+        );
+        nmsItemStack.setTag(asNMSTagCompound(tag));
+        return asCraftItemStack(nmsItemStack);
+    }
+
+    @Override
+    public @Nullable NotchianNbtTagCompound getItemStackTag(@NotNull ItemStack itemStack) {
+        net.minecraft.server.v1_8_R3.ItemStack nmsItemStack = asNMSItemStack(itemStack);
+        NBTTagCompound nmsTag = (nmsItemStack != null) ? nmsItemStack.getTag() : null;
+        return nmsTag != null ? new NotchianNbtTagCompound1_8_R3(nmsTag) : null;
+    }
+
+    private @Nullable NBTTagCompound asNMSTagCompound(@Nullable NotchianNbtTagCompound tag) {
+        if (tag == null) {
+            return null;
+        }
+        if (tag instanceof NotchianNbtTagCompound1_8_R3) {
+            return ((NotchianNbtTagCompound1_8_R3) tag).getHandle();
+        }
+        try (AZPacketBuffer buf = az().createHeapPacketBuffer(null)) {
+            tag.write(buf);
+            return readFromNMSPacketBuffer(buf, PacketDataSerializer::h);
+        }
+    }
+
+    @Override
+    public @Nullable ItemStack readItemStack(@NotNull AZPacketBuffer buf) {
+        net.minecraft.server.v1_8_R3.ItemStack nmsItemStack = readFromNMSPacketBuffer(buf, PacketDataSerializer::i);
+        return asCraftItemStack(nmsItemStack);
+    }
+
+    @Override
+    public void writeItemStack(@NotNull AZPacketBuffer buf, @Nullable ItemStack itemStack) {
+        writeToNMSPacketBuffer(buf, nmsBuf -> nmsBuf.a(asNMSItemStack(itemStack)));
+    }
+
+    @Override
+    public @Nullable NotchianNbtTagCompound readNotchianNbtTagCompound(@NotNull AZPacketBuffer buf) {
+        NBTTagCompound nmsTag = readFromNMSPacketBuffer(buf, PacketDataSerializer::h);
+        return nmsTag != null ? new NotchianNbtTagCompound1_8_R3(nmsTag) : null;
     }
 
     @Override

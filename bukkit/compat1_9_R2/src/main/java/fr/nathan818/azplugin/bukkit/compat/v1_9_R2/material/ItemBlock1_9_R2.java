@@ -1,15 +1,17 @@
 package fr.nathan818.azplugin.bukkit.compat.v1_9_R2.material;
 
+import fr.nathan818.azplugin.bukkit.compat.material.ItemBlockHandler;
 import fr.nathan818.azplugin.bukkit.compat.material.ItemDefinition;
-import fr.nathan818.azplugin.bukkit.compat.material.ItemHandler;
 import fr.nathan818.azplugin.bukkit.compat.util.HandlerConstants;
+import lombok.Getter;
 import net.minecraft.server.v1_9_R2.Block;
 import net.minecraft.server.v1_9_R2.ItemBlock;
 import net.minecraft.server.v1_9_R2.ItemStack;
 
+@Getter
 public class ItemBlock1_9_R2 extends ItemBlock {
 
-    private final ItemHandler handler;
+    private final ItemBlockHandler handler;
 
     public ItemBlock1_9_R2(Block block, ItemDefinition definition, ItemDefinition.ItemBlock type) {
         super(block);
