@@ -1,11 +1,15 @@
 package fr.nathan818.azplugin.bukkit.compat.v1_8_R3;
 
-import fr.nathan818.azplugin.bukkit.item.ItemStackProxyAbstract;
+import fr.nathan818.azplugin.bukkit.compat.proxy.ItemStackProxy;
+import fr.nathan818.azplugin.bukkit.compat.proxy.NbtCompoundProxy;
 import lombok.NonNull;
 import net.minecraft.server.v1_8_R3.Item;
 import net.minecraft.server.v1_8_R3.ItemStack;
+import net.minecraft.server.v1_8_R3.NBTTagCompound;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class ItemStackProxy1_8_R3 extends ItemStackProxyAbstract {
+public class ItemStackProxy1_8_R3 implements ItemStackProxy {
 
     private ItemStack handle;
     private boolean copied;
@@ -55,5 +59,36 @@ public class ItemStackProxy1_8_R3 extends ItemStackProxyAbstract {
     @Override
     public void setDurability(int durability) {
         getForWrite().setData(durability);
+    }
+
+    @Override
+    public @Nullable NbtCompoundProxy getTagForRead() {
+        NBTTagCompound tag = getForRead().getTag();
+        return (tag == null) ? null : new NbtCompoundProxy1_8_R3(tag, true);
+    }
+
+    @Override
+    public @NotNull NbtCompoundProxy getTagForWrite() {
+        ItemStack handle = getForWrite();
+        NBTTagCompound tag = handle.getTag();
+        if (tag == null) {
+            tag = new NBTTagCompound();
+            handle.setTag(tag);
+        }
+        return new NbtCompoundProxy1_8_R3(tag, false);
+    }
+
+    @Override
+    public boolean removeTag() {
+        if (getForRead().getTag() == null) {
+            return false;
+        }
+        getForWrite().setTag(null);
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return handle.toString();
     }
 }

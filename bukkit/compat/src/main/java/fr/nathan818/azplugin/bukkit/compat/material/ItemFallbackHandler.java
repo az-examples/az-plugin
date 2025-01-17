@@ -1,10 +1,12 @@
 package fr.nathan818.azplugin.bukkit.compat.material;
 
-import fr.nathan818.azplugin.bukkit.item.ItemStackProxy;
+import fr.nathan818.azplugin.bukkit.compat.proxy.ItemStackProxy;
+import fr.nathan818.azplugin.bukkit.compat.type.ItemData;
 import fr.nathan818.azplugin.common.network.AZNetworkContext;
 import lombok.NonNull;
 import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ItemFallbackHandler extends ItemHandler {
 
@@ -20,9 +22,9 @@ public class ItemFallbackHandler extends ItemHandler {
     }
 
     @Override
-    public void applyFallback(@NotNull AZNetworkContext ctx, @NotNull ItemStackProxy itemStack) {
+    public ItemData applyFallbackItem(@NotNull AZNetworkContext ctx, @NotNull ItemStackProxy itemStack) {
         if (ctx.getAZProtocolVersion() >= definition.getSinceProtocolVersion()) {
-            return;
+            return null;
         }
 
         short itemMaxDurability = itemStack.getType().getMaxDurability();
@@ -42,7 +44,14 @@ public class ItemFallbackHandler extends ItemHandler {
             durability = 0;
         }
 
-        itemStack.setType(fallbackItem);
-        itemStack.setDurability(durability);
+        return new ItemData(fallbackItem.getId(), durability);
+    }
+
+    @Override
+    public @Nullable ItemData revertFallbackItem(@NotNull AZNetworkContext ctx, @NotNull ItemData orig) {
+        if (ctx.getAZProtocolVersion() >= definition.getSinceProtocolVersion()) {
+            return null;
+        }
+        return new ItemData(definition.getId(), orig.getData());
     }
 }

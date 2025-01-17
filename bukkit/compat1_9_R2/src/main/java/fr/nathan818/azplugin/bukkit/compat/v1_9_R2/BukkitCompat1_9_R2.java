@@ -163,7 +163,7 @@ public class BukkitCompat1_9_R2 implements BukkitCompat {
             }
             AZPlayer player = (nmsPlayer == null) ? null : az(nmsPlayer.getBukkitEntity());
             ItemStackProxy1_9_R2 proxy = new ItemStackProxy1_9_R2(nmsItemStack, false);
-            rewriter.rewriteItemStackOut(AZNetworkContext.of(player), proxy);
+            rewriter.rewriteItemStackIn(AZNetworkContext.of(player), proxy);
             return proxy.getForRead();
         };
     }

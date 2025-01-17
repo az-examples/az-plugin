@@ -1,6 +1,7 @@
-package fr.nathan818.azplugin.bukkit.item;
+package fr.nathan818.azplugin.bukkit.compat.proxy;
 
 import org.bukkit.Material;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ItemStackProxy {
@@ -23,5 +24,12 @@ public interface ItemStackProxy {
     int getDurability();
 
     void setDurability(int durability);
-    // TODO: tag methods
+
+    @Nullable
+    NbtCompoundProxy getTagForRead();
+
+    @NotNull
+    NbtCompoundProxy getTagForWrite();
+
+    boolean removeTag();
 }

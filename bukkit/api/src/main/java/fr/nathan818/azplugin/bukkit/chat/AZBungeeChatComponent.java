@@ -2,6 +2,7 @@ package fr.nathan818.azplugin.bukkit.chat;
 
 import fr.nathan818.azplugin.common.AZConstants;
 import fr.nathan818.azplugin.common.chat.NotchianChatComponentLike;
+import java.util.Arrays;
 import java.util.function.Consumer;
 import lombok.NonNull;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -87,5 +88,30 @@ public interface AZBungeeChatComponent extends NotchianChatComponent, NotchianCh
     @Override
     default AZBungeeChatComponent asNotchianChatComponent() {
         return this;
+    }
+
+    static String toString(@Nullable AZBungeeChatComponent component) {
+        if (component == null) {
+            return "null";
+        }
+        return "AZBungeeChatComponent[\"" + TextComponent.toPlainText(component.getBungeeComponent()) + "\"]";
+    }
+
+    static boolean equals(@Nullable AZBungeeChatComponent a, @Nullable Object b) {
+        if (a == b) {
+            return true;
+        }
+        if (a == null || !(b instanceof AZBungeeChatComponent)) {
+            return false;
+        }
+        AZBungeeChatComponent that = (AZBungeeChatComponent) b;
+        return Arrays.equals(a.getBungeeComponent(), that.getBungeeComponent());
+    }
+
+    static int hashCode(@Nullable AZBungeeChatComponent component) {
+        if (component == null) {
+            return 0;
+        }
+        return Arrays.hashCode(component.getBungeeComponent());
     }
 }

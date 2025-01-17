@@ -1,11 +1,13 @@
 package fr.nathan818.azplugin.bukkit.compat.material;
 
+import fr.nathan818.azplugin.bukkit.compat.proxy.ItemStackProxy;
 import fr.nathan818.azplugin.bukkit.compat.type.DyeColor;
-import fr.nathan818.azplugin.bukkit.item.ItemStackProxy;
+import fr.nathan818.azplugin.bukkit.compat.type.ItemData;
 import fr.nathan818.azplugin.common.network.AZNetworkContext;
 import lombok.NonNull;
 import org.bukkit.Material;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ItemStainedObsidianHandler extends ItemBlockHandler {
 
@@ -14,12 +16,19 @@ public class ItemStainedObsidianHandler extends ItemBlockHandler {
     }
 
     @Override
-    public void applyFallback(@NotNull AZNetworkContext ctx, @NotNull ItemStackProxy itemStack) {
+    public ItemData applyFallbackItem(@NotNull AZNetworkContext ctx, @NotNull ItemStackProxy itemStack) {
         if (ctx.getAZProtocolVersion() >= definition.getSinceProtocolVersion()) {
-            return;
+            return null;
         }
-        itemStack.setType(Material.OBSIDIAN);
-        itemStack.setDurability(0);
+        return new ItemData(Material.OBSIDIAN.getId(), 0);
+    }
+
+    @Override
+    public @Nullable ItemData revertFallbackItem(@NotNull AZNetworkContext ctx, @NotNull ItemData orig) {
+        if (ctx.getAZProtocolVersion() >= definition.getSinceProtocolVersion()) {
+            return null;
+        }
+        return new ItemData(definition.getId(), filterData(orig.getData()));
     }
 
     @Override

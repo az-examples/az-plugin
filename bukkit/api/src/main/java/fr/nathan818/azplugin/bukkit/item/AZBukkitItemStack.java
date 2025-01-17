@@ -2,6 +2,7 @@ package fr.nathan818.azplugin.bukkit.item;
 
 import fr.nathan818.azplugin.bukkit.AZBukkit;
 import fr.nathan818.azplugin.common.item.NotchianItemStackLike;
+import java.util.Objects;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -75,5 +76,36 @@ public interface AZBukkitItemStack extends NotchianItemStack, NotchianItemStackL
     @Override
     default AZBukkitItemStack asNotchianItemStack() {
         return this;
+    }
+
+    static String toString(@Nullable AZBukkitItemStack item) {
+        if (item == null) {
+            return "null";
+        }
+        ItemStack itemStack = item.getBukkitItemStack();
+        NotchianNbtTagCompound tag = AZBukkit.platform().getItemStackTag(itemStack);
+        return (
+            "AZBukkitItemStack[" +
+            itemStack.getTypeId() +
+            (":" + itemStack.getDurability()) +
+            ("*" + itemStack.getAmount()) +
+            (tag == null ? "" : " " + tag) +
+            "]"
+        );
+    }
+
+    static boolean equals(@Nullable AZBukkitItemStack a, @Nullable Object b) {
+        if (a == b) {
+            return true;
+        }
+        if (a == null || !(b instanceof AZBukkitItemStack)) {
+            return false;
+        }
+        AZBukkitItemStack that = (AZBukkitItemStack) b;
+        return Objects.equals(a.getBukkitItemStack(), that.getBukkitItemStack());
+    }
+
+    static int hashCode(@Nullable AZBukkitItemStack item) {
+        return (item == null) ? 0 : Objects.hashCode(item.getBukkitItemStack());
     }
 }

@@ -1,5 +1,6 @@
 package fr.nathan818.azplugin.bukkit.compat.type;
 
+import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.bukkit.util.NumberConversions;
@@ -27,6 +28,7 @@ public final class BoundingBox {
      * @deprecated internal use
      */
     @Deprecated
+    @Getter(AccessLevel.NONE)
     public Object nmsCache;
 
     BoundingBox(double x1, double y1, double z1, double x2, double y2, double z2) {

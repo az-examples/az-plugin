@@ -8,7 +8,7 @@ import net.md_5.bungee.api.chat.BaseComponent;
 
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-final class AZBungeeChatComponentImpl extends AZBungeeChatComponentAbstract {
+final class AZBungeeChatComponentImpl implements AZBungeeChatComponent {
 
     static final AZBungeeChatComponentImpl EMPTY = new AZBungeeChatComponentImpl(new BaseComponent[0]);
 
@@ -20,5 +20,20 @@ final class AZBungeeChatComponentImpl extends AZBungeeChatComponentAbstract {
             component[i] = component[i].duplicate();
         }
         return component;
+    }
+
+    @Override
+    public String toString() {
+        return AZBungeeChatComponent.toString(this);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return AZBungeeChatComponent.equals(this, obj);
+    }
+
+    @Override
+    public int hashCode() {
+        return AZBungeeChatComponent.hashCode(this);
     }
 }

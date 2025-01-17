@@ -14,9 +14,11 @@ import fr.nathan818.azplugin.bukkit.compat.material.RegisterBlockResult;
 import fr.nathan818.azplugin.bukkit.compat.material.RegisterItemResult;
 import fr.nathan818.azplugin.bukkit.compat.network.BlockRewriter;
 import fr.nathan818.azplugin.bukkit.compat.network.ItemStackRewriter;
+import fr.nathan818.azplugin.bukkit.compat.proxy.ItemStackProxy;
+import fr.nathan818.azplugin.bukkit.compat.proxy.NbtCompoundProxy;
 import fr.nathan818.azplugin.bukkit.compat.type.BlockState;
+import fr.nathan818.azplugin.bukkit.compat.type.ItemData;
 import fr.nathan818.azplugin.bukkit.entity.AZPlayer;
-import fr.nathan818.azplugin.bukkit.item.ItemStackProxy;
 import fr.nathan818.azplugin.bukkit.plugin.AZPlugin;
 import fr.nathan818.azplugin.bukkit.plugin.entity.AZPlayerImpl;
 import fr.nathan818.azplugin.common.AZClient;
@@ -214,15 +216,62 @@ public class MaterialManager implements Listener, BlockRewriter, ItemStackRewrit
 
     @Override
     public void rewriteItemStackOut(@NotNull AZNetworkContext ctx, @NotNull ItemStackProxy itemStack) {
-        ItemHandler handler = itemHandlers.get(itemStack.getTypeId());
-        if (handler != null) {
-            handler.applyFallback(ctx, itemStack);
+        int itemId = itemStack.getTypeId();
+        ItemHandler handler = itemHandlers.get(itemId);
+        if (handler == null) {
+            return;
         }
+
+        ItemData fallback = handler.applyFallbackItem(ctx, itemStack);
+        if (fallback == null) {
+            return;
+        }
+
+        NbtCompoundProxy tag = itemStack.getTagForWrite();
+        tag.setShort("AZPlugin.ItemId", (short) itemId);
+        if (fallback.getId() != itemStack.getTypeId()) {
+            tag.setShort("AZPlugin.OrigId", (short) itemStack.getTypeId());
+            itemStack.setTypeId(fallback.getId());
+        }
+        if (fallback.getData() != itemStack.getDurability()) {
+            tag.setShort("AZPlugin.OrigData", (short) itemStack.getDurability());
+            itemStack.setDurability(fallback.getData());
+        }
+        // TODO: Also rewrite item name
     }
 
     @Override
     public void rewriteItemStackIn(@NotNull AZNetworkContext ctx, @NotNull ItemStackProxy itemStack) {
-        // TODO
+        NbtCompoundProxy tag = itemStack.getTagForRead();
+        if (tag == null) {
+            return;
+        }
+
+        int azItemId = tag.getShort("AZPlugin.ItemId", (short) 0);
+        if (azItemId == 0) {
+            return;
+        }
+
+        ItemData orig = new ItemData(
+            tag.getInt("AZ.OrigId", itemStack.getTypeId()),
+            tag.getInt("AZ.OrigData", itemStack.getDurability())
+        );
+        ItemHandler handler;
+        if ((handler = itemHandlers.get(azItemId)) != null) {
+            ItemData reverted = handler.revertFallbackItem(ctx, orig);
+            if (reverted != null) {
+                itemStack.setTypeId(reverted.getId());
+                itemStack.setDurability(reverted.getData());
+            }
+        }
+
+        tag = itemStack.getTagForWrite();
+        tag.remove("AZPlugin.ItemId");
+        tag.remove("AZPlugin.OrigId");
+        tag.remove("AZPlugin.OrigData");
+        if (tag.isEmpty()) {
+            itemStack.removeTag();
+        }
     }
 
     private static short[] toShortArray(Set<Short> set) {

@@ -1,12 +1,8 @@
 package fr.nathan818.azplugin.bukkit.compat.type;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.Data;
 
-@RequiredArgsConstructor
-@Getter
-@EqualsAndHashCode
+@Data
 public final class BlockPos {
 
     private final int x;
