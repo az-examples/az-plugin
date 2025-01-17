@@ -31,6 +31,10 @@ public class CompatBridge1_9_R2 {
         throw new UnsupportedOperationException(); // implemented by BukkitAgentCompat1_9_R2
     }
 
+    public static void setNextWindowId(@NotNull EntityPlayer handle, int windowId) {
+        throw new UnsupportedOperationException(); // implemented by BukkitAgentCompat1_9_R2
+    }
+
     public static void writeChunkData(
         @NotNull PacketDataSerializer buf,
         @Nullable EntityPlayer nmsPlayer,

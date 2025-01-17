@@ -1,5 +1,6 @@
 package fr.nathan818.azplugin.bukkit.plugin.entity;
 
+import static fr.nathan818.azplugin.bukkit.compat.BukkitCompat.compat;
 import static fr.nathan818.azplugin.common.AZPlatform.log;
 
 import fr.nathan818.azplugin.bukkit.AZBukkit;
@@ -37,6 +38,8 @@ import lombok.experimental.Delegate;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import pactify.client.api.plsp.packet.client.PLSPPacketAbstractCosmeticEquipment;
@@ -55,6 +58,7 @@ public class AZPlayerImpl extends AZClientAbstract implements AZPlayer {
     @Delegate(types = AZEntity.class)
     private final AZEntityTrait entityTrait;
 
+    private int menuWindowId;
     private @Getter @Setter int@NonNull[] rewriteBlockOutPalette = new int[0];
 
     private final Map<AZCosmeticEquipment.Slot, EntityMetaCosmeticEquipment> cosmeticEquipmentsMeta = new EnumMap<>(
@@ -231,6 +235,35 @@ public class AZPlayerImpl extends AZClientAbstract implements AZPlayer {
         @Nullable Consumer<? super @Nullable Throwable> callback
     ) throws Exception {
         playerConnection.sendPluginMessage(channel, buf, callback);
+    }
+
+    public int nextMenuWindowId() {
+        if (menuWindowId < 101 || menuWindowId > 120) {
+            menuWindowId = 101;
+        } else {
+            ++menuWindowId;
+        }
+        return menuWindowId;
+    }
+
+    @Override
+    public InventoryView openMenuInventory(@NotNull Inventory inventory) {
+        compat().setNextWindowId(bukkitPlayer, nextMenuWindowId());
+        try {
+            return bukkitPlayer.openInventory(inventory);
+        } finally {
+            compat().setNextWindowId(bukkitPlayer, 0);
+        }
+    }
+
+    @Override
+    public void openMenuInventory(@NotNull InventoryView inventory) {
+        compat().setNextWindowId(bukkitPlayer, nextMenuWindowId());
+        try {
+            bukkitPlayer.openInventory(inventory);
+        } finally {
+            compat().setNextWindowId(bukkitPlayer, 0);
+        }
     }
 
     @Override

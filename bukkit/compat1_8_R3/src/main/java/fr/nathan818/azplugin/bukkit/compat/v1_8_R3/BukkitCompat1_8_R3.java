@@ -316,4 +316,9 @@ public class BukkitCompat1_8_R3 implements BukkitCompat {
     public void setBboxScale(@NotNull Entity entity, float width, float height) {
         CompatBridge1_8_R3.setBboxScale((CraftEntity) entity, width, height);
     }
+
+    @Override
+    public void setNextWindowId(@NotNull Player player, int windowId) {
+        CompatBridge1_8_R3.setNextWindowId(((CraftPlayer) player).getHandle(), windowId);
+    }
 }

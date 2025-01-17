@@ -5,6 +5,7 @@ import static fr.nathan818.azplugin.bukkit.compat.agent.CraftBukkitTransformers.
 import static fr.nathan818.azplugin.bukkit.compat.agent.CraftBukkitTransformers.registerGetItemStackHandle;
 import static fr.nathan818.azplugin.bukkit.compat.agent.EntityScaleTransformers.registerEntityScaleTransformer;
 import static fr.nathan818.azplugin.bukkit.compat.agent.NMSMaterialTransformers.registerNMSMaterialTransformer;
+import static fr.nathan818.azplugin.bukkit.compat.agent.PlayerWindowIdTransformers.registerWindowIdTransformers;
 import static fr.nathan818.azplugin.bukkit.compat.material.NMSMaterialDefinitions.ARMOR_MATERIALS;
 import static fr.nathan818.azplugin.bukkit.compat.material.NMSMaterialDefinitions.TOOL_MATERIALS;
 import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.CompatBridge1_9_R2;
@@ -65,6 +66,10 @@ public class BukkitAgentCompat1_9_R2 {
             opts.compatBridgeClass(CompatBridge1_9_R2);
             opts.nmsEntityClass(Entity1_9_R2);
             opts.craftEntityClass(CraftEntity1_9_R2);
+        });
+        registerWindowIdTransformers(agent, opts -> {
+            opts.compatBridgeClass(CompatBridge1_9_R2);
+            opts.nmsEntityPlayerClass(EntityPlayer1_9_R2);
         });
         PacketRewriteTransformers.register(agent, opts -> {
             opts.compatBridgeClass(CompatBridge1_9_R2);

@@ -35,7 +35,7 @@ public class CraftBukkitTransformers {
                         mg.returnValue();
                         mg.endMethod();
                         addInfo(cv, getClassName(), "Defined getItemStackHandle method");
-                        return mg;
+                        return null;
                     }
                     return super.visitMethod(access, name, descriptor, signature, exceptions);
                 }
@@ -102,7 +102,7 @@ public class CraftBukkitTransformers {
                         mg.returnValue();
                         mg.endMethod();
                         addInfo(cv, compatBridgeClass, "Defined " + getterName + " method");
-                        return mg;
+                        return null;
                     }
                     if (setterName.equals(name)) {
                         // public static void setterName(Object holder, Object value) {
@@ -115,7 +115,7 @@ public class CraftBukkitTransformers {
                         mg.returnValue();
                         mg.endMethod();
                         addInfo(cv, compatBridgeClass, "Defined " + setterName + " method");
-                        return mg;
+                        return null;
                     }
                     return super.visitMethod(access, name, descriptor, signature, exceptions);
                 }

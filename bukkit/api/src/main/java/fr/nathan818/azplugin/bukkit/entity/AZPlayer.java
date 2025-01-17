@@ -10,6 +10,8 @@ import java.util.UUID;
 import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +51,10 @@ public interface AZPlayer extends AZClient, AZEntity {
     default boolean openBook(@NotNull ItemStack book) {
         return openBook(AZBukkitItemStack.copyOf(book));
     }
+
+    InventoryView openMenuInventory(@NotNull Inventory inventory);
+
+    void openMenuInventory(@NotNull InventoryView inventory);
 
     default void closeInventory() {
         Player bukkitPlayer = getBukkitPlayer();

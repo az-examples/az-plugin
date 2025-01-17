@@ -71,7 +71,7 @@ public class EntityScaleTransformers {
                 mg.returnValue();
                 mg.endMethod();
                 addInfo(cv, getClassName(), "Defined setBboxScale method");
-                return mg;
+                return null;
             }
             return super.visitMethod(access, name, descriptor, signature, exceptions);
         }

@@ -151,4 +151,8 @@ public interface BukkitCompat {
     default void setBboxScale(@NotNull Entity entity, float width, float height) {
         // Do nothing when not implemented
     }
+
+    default void setNextWindowId(@NotNull Player player, int windowId) {
+        // Do nothing when not implemented
+    }
 }
