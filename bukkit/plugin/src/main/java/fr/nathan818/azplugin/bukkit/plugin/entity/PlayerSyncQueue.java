@@ -1,5 +1,6 @@
 package fr.nathan818.azplugin.bukkit.plugin.entity;
 
+import fr.nathan818.azplugin.bukkit.AZBukkit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -7,8 +8,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.Bukkit;
-import org.bukkit.scheduler.BukkitScheduler;
 
 @RequiredArgsConstructor
 class PlayerSyncQueue {
@@ -23,15 +22,14 @@ class PlayerSyncQueue {
         Function<? super String, ? extends T> getCurrent,
         Callback<T> callback
     ) {
-        // TODO: Use a player-targeted "primary-thread" utility (for multi-threaded servers support)
-        if (Bukkit.isPrimaryThread()) {
+        if (AZBukkit.platform().isSync(player)) {
             onChangeSync(key, getDefault, getCurrent, callback);
         } else if (scheduledKeys.add(key)) {
-            BukkitScheduler scheduler = Bukkit.getScheduler();
-            scheduler.scheduleSyncDelayedTask(player.getPlugin(), () -> {
-                scheduledKeys.remove(key);
-                onChangeSync(key, getDefault, getCurrent, callback);
-            });
+            AZBukkit.platform()
+                .scheduleSync(player, () -> {
+                    scheduledKeys.remove(key);
+                    onChangeSync(key, getDefault, getCurrent, callback);
+                });
         }
     }
 

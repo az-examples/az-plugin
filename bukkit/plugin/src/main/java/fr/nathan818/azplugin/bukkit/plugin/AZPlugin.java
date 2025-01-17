@@ -9,6 +9,7 @@ import fr.nathan818.azplugin.bukkit.AZBukkitAPI;
 import fr.nathan818.azplugin.bukkit.AZBukkitPlatform;
 import fr.nathan818.azplugin.bukkit.agent.Main;
 import fr.nathan818.azplugin.bukkit.compat.BukkitCompat;
+import fr.nathan818.azplugin.bukkit.entity.AZEntity;
 import fr.nathan818.azplugin.bukkit.item.AZBukkitItemStack;
 import fr.nathan818.azplugin.bukkit.plugin.entity.ClientManager;
 import fr.nathan818.azplugin.bukkit.plugin.entity.EntityManager;
@@ -129,5 +130,22 @@ public class AZPlugin extends JavaPlugin implements AZBukkitPlatform {
     @Override
     public void closeInventoryServerSide(@NotNull Player bukkitPlayer) {
         compat().closeInventoryServerSide(bukkitPlayer);
+    }
+
+    @Override
+    public boolean isSync(@NotNull AZEntity target) {
+        return Bukkit.isPrimaryThread();
+    }
+
+    @Override
+    public void assertSync(@NotNull AZEntity target, String method) {
+        if (!isSync(target)) {
+            throw new IllegalStateException("Method " + method + " must be called on the main thread");
+        }
+    }
+
+    @Override
+    public void scheduleSync(@NotNull AZEntity target, @NotNull Runnable task) {
+        Bukkit.getScheduler().scheduleSyncDelayedTask(this, task);
     }
 }

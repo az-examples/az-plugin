@@ -1,5 +1,6 @@
 package fr.nathan818.azplugin.bukkit;
 
+import fr.nathan818.azplugin.bukkit.entity.AZEntity;
 import fr.nathan818.azplugin.bukkit.entity.AZPlayer;
 import fr.nathan818.azplugin.common.AZPlatform;
 import org.bukkit.entity.Player;
@@ -25,4 +26,10 @@ public interface AZBukkitPlatform extends AZPlatform<Player, AZPlayer> {
     int getActiveContainerWindowId(@NotNull Player bukkitPlayer);
 
     void closeInventoryServerSide(@NotNull Player bukkitPlayer);
+
+    boolean isSync(@NotNull AZEntity target);
+
+    void assertSync(@NotNull AZEntity target, String method);
+
+    void scheduleSync(@NotNull AZEntity target, @NotNull Runnable task);
 }

@@ -4,6 +4,7 @@ import static fr.nathan818.azplugin.bukkit.AZBukkitShortcuts.az;
 import static fr.nathan818.azplugin.bukkit.compat.BukkitCompat.compat;
 import static fr.nathan818.azplugin.common.AZPlatform.log;
 
+import fr.nathan818.azplugin.bukkit.AZBukkit;
 import fr.nathan818.azplugin.bukkit.entity.AZEntity;
 import fr.nathan818.azplugin.bukkit.entity.AZPlayer;
 import fr.nathan818.azplugin.bukkit.event.AZEntityModelChangedEvent;
@@ -45,7 +46,7 @@ public abstract class AZEntityTrait implements AZEntity {
 
     @Override
     public Iterable<? extends Player> getViewers(boolean includeSelf) {
-        // TODO: AsyncCatcher
+        AZBukkit.platform().assertSync(this, "getViewers");
         Player bukkitPlayer;
         if (includeSelf && (bukkitPlayer = getBukkitPlayer()) != null) {
             return CollectionsUtil.mergeIterables(
@@ -67,7 +68,7 @@ public abstract class AZEntityTrait implements AZEntity {
 
     @Override
     public boolean isViewer(@NotNull Player other) {
-        // TODO: AsyncCatcher
+        AZBukkit.platform().assertSync(this, "isViewer");
         return compat().isViewer(getBukkitEntity(), other);
     }
 
@@ -128,7 +129,7 @@ public abstract class AZEntityTrait implements AZEntity {
 
     @Override
     public void setScale(@Nullable AZNetworkValue<AZEntityScale> scale, boolean flush) {
-        // TODO: AsyncCatcher
+        AZBukkit.platform().assertSync(this, "setScale");
         AZNetworkValue<AZEntityScale> oldScale = scaleMeta.get();
         if (!scaleMeta.set(scale)) {
             return;
@@ -142,7 +143,7 @@ public abstract class AZEntityTrait implements AZEntity {
 
     @Override
     public void flushScale(@NotNull Iterable<? extends @NotNull Player> recipients) {
-        // TODO: AsyncCatcher
+        AZBukkit.platform().assertSync(this, "flushScale");
         flushMeta(scaleMeta, recipients, true);
     }
 
@@ -153,7 +154,7 @@ public abstract class AZEntityTrait implements AZEntity {
 
     @Override
     public void setModel(@Nullable AZNetworkValue<AZEntityModel> model, boolean flush) {
-        // TODO: AsyncCatcher
+        AZBukkit.platform().assertSync(this, "setModel");
         AZNetworkValue<AZEntityModel> oldModel = modelMeta.get();
         if (!modelMeta.set(model)) {
             return;
@@ -167,7 +168,7 @@ public abstract class AZEntityTrait implements AZEntity {
 
     @Override
     public void flushModel(@NotNull Iterable<? extends @NotNull Player> recipients) {
-        // TODO: AsyncCatcher
+        AZBukkit.platform().assertSync(this, "flushModel");
         flushMeta(modelMeta, recipients, true);
     }
 
@@ -178,7 +179,7 @@ public abstract class AZEntityTrait implements AZEntity {
 
     @Override
     public void setNameTag(@NotNull AZNameTag.Slot slot, @Nullable AZNetworkValue<AZNameTag> tag, boolean flush) {
-        // TODO: AsyncCatcher
+        AZBukkit.platform().assertSync(this, "setNameTag");
         EntityMetaNameTag nameTagMeta = getNameTagMeta(slot);
         AZNetworkValue<AZNameTag> oldTag = nameTagMeta.get();
         if (!nameTagMeta.set(tag)) {
@@ -192,7 +193,7 @@ public abstract class AZEntityTrait implements AZEntity {
 
     @Override
     public void flushNameTag(@NotNull AZNameTag.Slot slot, @NotNull Iterable<? extends @NotNull Player> recipients) {
-        // TODO: AsyncCatcher
+        AZBukkit.platform().assertSync(this, "flushNameTag");
         flushMeta(getNameTagMeta(slot), recipients, true);
     }
 
@@ -203,7 +204,7 @@ public abstract class AZEntityTrait implements AZEntity {
 
     @Override
     public void setOpacity(@Nullable AZNetworkValue<Float> opacity, boolean flush) {
-        // TODO: AsyncCatcher
+        AZBukkit.platform().assertSync(this, "setOpacity");
         AZNetworkValue<Float> oldOpacity = opacityMeta.get();
         if (!opacityMeta.set(opacity)) {
             return;
@@ -216,7 +217,7 @@ public abstract class AZEntityTrait implements AZEntity {
 
     @Override
     public void flushOpacity(@NotNull Iterable<? extends @NotNull Player> recipients) {
-        // TODO: AsyncCatcher
+        AZBukkit.platform().assertSync(this, "flushOpacity");
         flushMeta(opacityMeta, recipients, true);
     }
 
@@ -230,7 +231,7 @@ public abstract class AZEntityTrait implements AZEntity {
         boolean onTrackBegin,
         @Nullable SendPacketFunction customSendFunction
     ) {
-        // TODO: AsyncCatcher
+        AZBukkit.platform().assertSync(this, "flushAllMetadata");
         AZNetworkValue<AZEntityScale> scale = scaleMeta.get();
         AZNetworkValue<AZEntityModel> model = modelMeta.get();
         AZNetworkValue<AZNameTag> nameTag = nameTagMeta.get();

@@ -169,7 +169,7 @@ public class MaterialManager implements Listener, BlockRewriter, ItemStackRewrit
     }
 
     private void addRecipe(@Nullable Material material, Supplier<? extends Recipe> recipe) {
-        // TODO: Add config to enable/disable custom recipes
+        // TODO(low): Add config to enable/disable custom recipes
         if (material != null) {
             plugin.getServer().addRecipe(recipe.get());
         }
@@ -237,7 +237,7 @@ public class MaterialManager implements Listener, BlockRewriter, ItemStackRewrit
             tag.setShort("AZPlugin.OrigData", (short) itemStack.getDurability());
             itemStack.setDurability(fallback.getData());
         }
-        // TODO: Also rewrite item name
+        // TODO(low): Also rewrite item name
     }
 
     @Override

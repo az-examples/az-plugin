@@ -2,6 +2,7 @@ package fr.nathan818.azplugin.bukkit.plugin.entity;
 
 import static fr.nathan818.azplugin.common.AZPlatform.log;
 
+import fr.nathan818.azplugin.bukkit.AZBukkit;
 import fr.nathan818.azplugin.bukkit.compat.network.PlayerConnection;
 import fr.nathan818.azplugin.bukkit.entity.AZEntity;
 import fr.nathan818.azplugin.bukkit.entity.AZPlayer;
@@ -274,7 +275,6 @@ public class AZPlayerImpl extends AZClientAbstract implements AZPlayer {
 
     @Override
     public @Nullable AZNetworkValue<AZCosmeticEquipment> getCosmeticEquipment(@NotNull AZCosmeticEquipment.Slot slot) {
-        // TODO: AsyncCatcher
         EntityMetaCosmeticEquipment cosmeticEquipmentMeta = cosmeticEquipmentsMeta.get(slot);
         return cosmeticEquipmentMeta == null ? null : cosmeticEquipmentMeta.get();
     }
@@ -285,7 +285,7 @@ public class AZPlayerImpl extends AZClientAbstract implements AZPlayer {
         @Nullable AZNetworkValue<AZCosmeticEquipment> equipment,
         boolean flush
     ) {
-        // TODO: AsyncCatcher
+        AZBukkit.platform().assertSync(this, "setCosmeticEquipment");
         EntityMetaCosmeticEquipment cosmeticEquipmentMeta = cosmeticEquipmentsMeta.get(slot);
         if (cosmeticEquipmentMeta == null) {
             if (equipment == null) {
@@ -310,6 +310,7 @@ public class AZPlayerImpl extends AZClientAbstract implements AZPlayer {
         @NotNull AZCosmeticEquipment.Slot slot,
         @NotNull Iterable<? extends @NotNull Player> recipients
     ) {
+        AZBukkit.platform().assertSync(this, "flushCosmeticEquipment");
         flushCosmeticEquipment(cosmeticEquipmentsMeta.get(slot), recipients, true);
     }
 

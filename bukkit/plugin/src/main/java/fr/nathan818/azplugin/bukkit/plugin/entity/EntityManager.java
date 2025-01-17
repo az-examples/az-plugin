@@ -13,14 +13,12 @@ import fr.nathan818.azplugin.common.appearance.AZEntityModel;
 import fr.nathan818.azplugin.common.appearance.AZEntityScale;
 import java.util.Collections;
 import lombok.RequiredArgsConstructor;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.scheduler.BukkitScheduler;
 import org.jetbrains.annotations.NotNull;
 
 @RequiredArgsConstructor
@@ -31,7 +29,6 @@ public class EntityManager implements Listener {
     public void register() {
         CompatBridge.getHeadHeightFunction = EntityManager::getHeadHeight;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        // TODO: reload all entities
     }
 
     public void unregister() {
@@ -44,13 +41,12 @@ public class EntityManager implements Listener {
         if (azPlayer != null) {
             // Send initial metadata to self
             // Delayed to be sent after PacketPlayOutPlayerInfo
-            // TODO: Use a player-targeted scheduler utility
-            BukkitScheduler scheduler = Bukkit.getScheduler();
-            scheduler.scheduleSyncDelayedTask(plugin, () -> {
-                if (azPlayer.isValid()) {
-                    azPlayer.flushAllMetadata(Collections.singleton(azPlayer.getBukkitPlayer()), true);
-                }
-            });
+            AZBukkit.platform()
+                .scheduleSync(azPlayer, () -> {
+                    if (azPlayer.isValid()) {
+                        azPlayer.flushAllMetadata(Collections.singleton(azPlayer.getBukkitPlayer()), true);
+                    }
+                });
         }
     }
 
