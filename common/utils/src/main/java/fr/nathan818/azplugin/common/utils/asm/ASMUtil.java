@@ -8,7 +8,6 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 
 @UtilityClass
@@ -17,6 +16,16 @@ public class ASMUtil {
     public static final String CONSTRUCTOR_NAME = "<init>";
     public static final String STATIC_INITIALIZER_NAME = "<clinit>";
     public static final Type[] NO_ARGS = new Type[0];
+
+    public static final Type BYTE_ARRAY_TYPE = Type.getType(byte[].class);
+
+    public static Type t(String internalName) {
+        return Type.getObjectType(internalName);
+    }
+
+    public static Type t(Class<?> clazz) {
+        return Type.getType(clazz);
+    }
 
     public static Type arrayType(Type elementType) {
         return Type.getType("[" + elementType.getDescriptor());
@@ -46,15 +55,15 @@ public class ASMUtil {
         return new Method(CONSTRUCTOR_NAME, Type.VOID_TYPE, argumentTypes);
     }
 
-    public static GeneratorAdapter createGenericGeneratorAdapter(int api, MethodVisitor mv, boolean isStatic) {
-        return new GeneratorAdapter(api, mv, isStatic ? Opcodes.ACC_STATIC : 0, "<unknown>", "()V") {};
+    public static AZGeneratorAdapter createGenericGeneratorAdapter(int api, MethodVisitor mv, boolean isStatic) {
+        return new AZGeneratorAdapter(api, mv, isStatic ? Opcodes.ACC_STATIC : 0, "<unknown>", "()V") {};
     }
 
-    public static GeneratorAdapter generateMethod(ClassVisitor cv, int access, Method method) {
+    public static AZGeneratorAdapter generateMethod(ClassVisitor cv, int access, Method method) {
         return generateMethod(cv, access, method.getName(), method.getReturnType(), method.getArgumentTypes());
     }
 
-    public static GeneratorAdapter generateMethod(
+    public static AZGeneratorAdapter generateMethod(
         ClassVisitor cv,
         int access,
         String name,
@@ -64,7 +73,7 @@ public class ASMUtil {
         return generateMethod(cv, access, name, returnType, argumentTypes, null, null);
     }
 
-    public static GeneratorAdapter generateMethod(
+    public static AZGeneratorAdapter generateMethod(
         ClassVisitor cv,
         int access,
         String name,
@@ -73,16 +82,18 @@ public class ASMUtil {
         String signature,
         Type[] exceptions
     ) {
-        String descriptor = Type.getMethodDescriptor(returnType, argumentTypes);
-        return new GeneratorAdapter(
-            cv.visitMethod(access, name, descriptor, signature, getInternalNames(exceptions)),
+        return new AZGeneratorAdapter(
+            Opcodes.ASM9,
+            cv,
             access,
             name,
-            descriptor
+            Type.getMethodDescriptor(returnType, argumentTypes),
+            signature,
+            getInternalNames(exceptions)
         );
     }
 
-    public static GeneratorAdapter generateMethod(
+    public static AZGeneratorAdapter generateMethod(
         ClassVisitor cv,
         int access,
         String name,
@@ -90,15 +101,10 @@ public class ASMUtil {
         String signature,
         String[] exceptions
     ) {
-        return new GeneratorAdapter(
-            cv.visitMethod(access, name, descriptor, signature, exceptions),
-            access,
-            name,
-            descriptor
-        );
+        return new AZGeneratorAdapter(Opcodes.ASM9, cv, access, name, descriptor, signature, exceptions);
     }
 
-    public static Method asMethod(GeneratorAdapter mg) {
+    public static Method asMethod(AZGeneratorAdapter mg) {
         return new Method(mg.getName(), mg.getReturnType(), mg.getArgumentTypes());
     }
 
@@ -106,7 +112,7 @@ public class ASMUtil {
         return Type.getMethodDescriptor(expectedReturnType, expectedArgumentTypes).equals(descriptor);
     }
 
-    public static void createArray(GeneratorAdapter mg, int[] values) {
+    public static void createArray(AZGeneratorAdapter mg, int[] values) {
         mg.push(values.length);
         mg.newArray(Type.INT_TYPE);
         for (int i = 0; i < values.length; i++) {
@@ -117,7 +123,7 @@ public class ASMUtil {
         }
     }
 
-    public static void invokeArraysCopyOf(GeneratorAdapter mg) {
+    public static void invokeArraysCopyOf(AZGeneratorAdapter mg) {
         mg.visitMethodInsn(
             Opcodes.INVOKESTATIC,
             "java/util/Arrays",
@@ -128,7 +134,7 @@ public class ASMUtil {
     }
 
     public static void defineConstantGetter(ClassVisitor cv, String methodName, boolean value) {
-        GeneratorAdapter mg = generateMethod(cv, Opcodes.ACC_PUBLIC, methodName, Type.BOOLEAN_TYPE, NO_ARGS);
+        AZGeneratorAdapter mg = generateMethod(cv, Opcodes.ACC_PUBLIC, methodName, Type.BOOLEAN_TYPE, NO_ARGS);
         mg.push(value);
         mg.returnValue();
         mg.endMethod();

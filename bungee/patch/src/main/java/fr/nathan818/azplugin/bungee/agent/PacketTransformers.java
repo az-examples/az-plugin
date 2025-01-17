@@ -4,7 +4,7 @@ import static fr.nathan818.azplugin.common.AZPlatform.log;
 
 import fr.nathan818.azplugin.common.utils.agent.Agent;
 import fr.nathan818.azplugin.common.utils.agent.ClassTransformer;
-import fr.nathan818.azplugin.common.utils.asm.ClassRewriter;
+import fr.nathan818.azplugin.common.utils.asm.AZClassVisitor;
 import java.util.logging.Level;
 import lombok.Getter;
 import org.objectweb.asm.ClassVisitor;
@@ -16,20 +16,23 @@ class PacketTransformers {
     private static final int NEW_CHAT_MESSAGE_LIMIT = 16384;
 
     public static void register(Agent agent) {
-        ClassTransformer chatTransformer = (loader, className, bytes) -> {
-            ClassRewriter crw = new ClassRewriter(loader, bytes);
-            ChatPacketTransformer tr = crw.rewrite(ChatPacketTransformer::new);
+        ClassTransformer chatTransformer = clazz -> {
+            ChatPacketTransformer tr = clazz.rewrite(ChatPacketTransformer::new);
             if (tr.getRefCount() > 0) {
-                log(Level.INFO, "Successfully increased {0} message limit to {1}", className, NEW_CHAT_MESSAGE_LIMIT);
+                log(
+                    Level.INFO,
+                    "Successfully increased {0} message limit to {1}",
+                    clazz.getClassName(),
+                    NEW_CHAT_MESSAGE_LIMIT
+                );
             }
-            return crw.getBytes();
         };
         agent.addTransformer("net/md_5/bungee/protocol/packet/Chat", chatTransformer);
         agent.addTransformer("net/md_5/bungee/protocol/packet/ClientChat", chatTransformer);
     }
 
     @Getter
-    private static class ChatPacketTransformer extends ClassVisitor {
+    private static class ChatPacketTransformer extends AZClassVisitor {
 
         private int refCount = 0;
 

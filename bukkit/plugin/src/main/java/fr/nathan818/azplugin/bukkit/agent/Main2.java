@@ -4,8 +4,8 @@ import static fr.nathan818.azplugin.common.AZPlatform.log;
 
 import fr.nathan818.azplugin.bukkit.compat.CompatRegistry;
 import fr.nathan818.azplugin.common.utils.agent.Agent;
+import fr.nathan818.azplugin.common.utils.agent.AgentSupport;
 import fr.nathan818.azplugin.common.utils.agent.LoadPluginsHook;
-import fr.nathan818.azplugin.common.utils.agent.PluginSupport;
 import java.lang.instrument.Instrumentation;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,9 +19,9 @@ public class Main2 {
             LoadPluginsHook.register(agent, n -> n.startsWith("org/bukkit/craftbukkit/") && n.endsWith("/CraftServer"));
             registerAgentCompats(agent);
             inst.addTransformer(agent);
-            PluginSupport.markAgentLoaded(Main.class);
+            AgentSupport.markAgentLoaded(Main.class);
         } catch (Throwable ex) {
-            throw PluginSupport.handleFatalError(ex);
+            throw AgentSupport.handleFatalError(ex);
         }
     }
 

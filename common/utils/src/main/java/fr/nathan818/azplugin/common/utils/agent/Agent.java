@@ -2,6 +2,7 @@ package fr.nathan818.azplugin.common.utils.agent;
 
 import static fr.nathan818.azplugin.common.AZPlatform.log;
 
+import fr.nathan818.azplugin.common.utils.agent.LoadingClass.ClassVisitorRewriteConstructor;
 import java.lang.instrument.ClassFileTransformer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,6 +20,7 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.objectweb.asm.ClassVisitor;
 
 public final class Agent implements ClassFileTransformer {
 
@@ -51,8 +53,38 @@ public final class Agent implements ClassFileTransformer {
         transformers.computeIfAbsent(className, ignored -> new LinkedList<>()).add(transformer);
     }
 
+    public <T extends ClassVisitor> void addTransformer(
+        String className,
+        ClassVisitorRewriteConstructor<T> transformer
+    ) {
+        addTransformer(className, clazz -> clazz.rewrite(transformer));
+    }
+
+    public <T extends ClassVisitor, A> void addTransformer(
+        String className,
+        LoadingClass.ClassVisitorRewriteConstructorWithArg<T, A> transformer,
+        A arg
+    ) {
+        addTransformer(className, clazz -> clazz.rewrite(transformer, arg));
+    }
+
     public void addTransformer(Predicate<String> className, ClassTransformer transformer) {
         predicateTransformers.add(new PredicateTransformer(className, transformer));
+    }
+
+    public <T extends ClassVisitor> void addTransformer(
+        Predicate<String> className,
+        ClassVisitorRewriteConstructor<T> transformer
+    ) {
+        addTransformer(className, clazz -> clazz.rewrite(transformer));
+    }
+
+    public <T extends ClassVisitor, A> void addTransformer(
+        Predicate<String> className,
+        LoadingClass.ClassVisitorRewriteConstructorWithArg<T, A> transformer,
+        A arg
+    ) {
+        addTransformer(className, clazz -> clazz.rewrite(transformer, arg));
     }
 
     @Override
@@ -61,45 +93,40 @@ public final class Agent implements ClassFileTransformer {
         String className,
         Class<?> classBeingRedefined,
         ProtectionDomain protectionDomain,
-        byte[] classfileBuffer
+        byte[] bytes
     ) {
         if (className == null) {
             return null;
         }
-        byte[] ret = classfileBuffer;
+        LoadingClass clazz = new LoadingClass(loader, className, bytes);
         try {
             List<ClassTransformer> transformers = this.transformers.getOrDefault(className, Collections.emptyList());
             for (ClassTransformer transformer : transformers) {
-                byte[] transformed = transformer.transform(loader, className, ret);
-                if (transformed != null) {
-                    ret = transformed;
-                }
+                transformer.transform(clazz);
             }
             for (PredicateTransformer transformer : predicateTransformers) {
                 if (!transformer.getClassName().test(className)) {
                     continue;
                 }
-                byte[] transformed = transformer.getTransformer().transform(loader, className, ret);
-                if (transformed != null) {
-                    ret = transformed;
-                }
+                transformer.getTransformer().transform(clazz);
             }
         } catch (Throwable ex) {
-            throw PluginSupport.handleFatalError(new RuntimeException("Failed to transform class: " + className, ex));
+            throw AgentSupport.handleFatalError(new RuntimeException("Failed to transform class: " + className, ex));
         }
-        if (ret == classfileBuffer) {
+        byte[] transformed = clazz.getBytes();
+        if (transformed == bytes) {
             return null;
         }
         if (DEBUG) {
             try {
                 Path path = Paths.get(DEBUG_DUMP_DIR, className + ".class");
                 Files.createDirectories(path.getParent());
-                Files.write(path, ret);
+                Files.write(path, transformed);
             } catch (Exception ex) {
                 log(Level.WARNING, "Failed to dump transformed class to disk: {0}", className, ex);
             }
         }
-        return ret;
+        return transformed;
     }
 
     @RequiredArgsConstructor

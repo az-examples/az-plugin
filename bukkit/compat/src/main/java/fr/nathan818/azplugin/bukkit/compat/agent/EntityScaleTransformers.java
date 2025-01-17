@@ -3,20 +3,23 @@ package fr.nathan818.azplugin.bukkit.compat.agent;
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.NO_ARGS;
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.addField;
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.generateMethod;
-import static fr.nathan818.azplugin.common.utils.asm.AgentClassWriter.addInfo;
+import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.t;
+import static fr.nathan818.azplugin.common.utils.asm.AZClassWriter.addInfo;
+import static org.objectweb.asm.Type.BOOLEAN_TYPE;
+import static org.objectweb.asm.Type.FLOAT_TYPE;
+import static org.objectweb.asm.Type.VOID_TYPE;
 
 import fr.nathan818.azplugin.common.utils.agent.Agent;
-import fr.nathan818.azplugin.common.utils.asm.ClassRewriter;
+import fr.nathan818.azplugin.common.utils.asm.AZClassVisitor;
+import fr.nathan818.azplugin.common.utils.asm.AZGeneratorAdapter;
 import java.util.function.Consumer;
 import lombok.Getter;
 import lombok.NonNull;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 
 public class EntityScaleTransformers {
@@ -26,321 +29,291 @@ public class EntityScaleTransformers {
         optionsConsumer.accept(builder);
         Options opts = builder.build();
 
-        agent.addTransformer(opts.getCompatBridgeClass(), (loader, className, bytes) ->
-            transformBridge(loader, className, bytes, opts)
-        );
-        agent.addTransformer(opts.getNmsEntityClass(), (loader, className, bytes) ->
-            transformEntityBase(loader, className, bytes, opts)
-        );
+        agent.addTransformer(opts.getCompatBridgeClass(), BridgeTransformer::new, opts);
+        agent.addTransformer(opts.getNmsEntityClass(), EntitySuperclassTransformer::new, opts);
         agent.addTransformer(
             n -> n.startsWith(opts.getNmsEntityClass()) && !n.equals(opts.getNmsEntityClass()),
-            (loader, className, bytes) -> transformEntitySubclass(loader, className, bytes, opts)
+            EntitySubclassTransformer::new,
+            opts
         );
     }
 
-    private static byte[] transformBridge(ClassLoader loader, String className, byte[] bytes, Options opts) {
-        ClassRewriter crw = new ClassRewriter(loader, bytes);
-        crw.rewrite((api, cv) ->
-            new ClassVisitor(api, cv) {
-                @Override
-                public MethodVisitor visitMethod(
-                    int access,
-                    String name,
-                    String descriptor,
-                    String signature,
-                    String[] exceptions
-                ) {
-                    if ("setBboxScale".equals(name)) {
-                        // public void setBboxScale(org.bukkit.entity.Entity arg0, float arg1, float arg2) {
-                        //   arg0.getHandle().setBboxScale(arg1, arg2);
-                        // }
-                        GeneratorAdapter mg = generateMethod(cv, access, name, descriptor, signature, exceptions);
-                        mg.loadArg(0);
-                        mg.invokeVirtual(
-                            Type.getObjectType(opts.getCraftEntityClass()),
-                            new Method("getHandle", Type.getObjectType(opts.getNmsEntityClass()), NO_ARGS)
-                        );
-                        mg.loadArg(1);
-                        mg.loadArg(2);
-                        mg.invokeVirtual(
-                            Type.getObjectType(opts.getNmsEntityClass()),
-                            new Method("setBboxScale", "(FF)V")
-                        );
-                        mg.returnValue();
-                        mg.endMethod();
-                        addInfo(cv, className, "Defined setBboxScale method");
-                        return mg;
-                    }
-                    return super.visitMethod(access, name, descriptor, signature, exceptions);
-                }
+    private static class BridgeTransformer extends AZClassVisitor {
+
+        private final Options opts;
+
+        public BridgeTransformer(int api, ClassVisitor cv, Options opts) {
+            super(api, cv);
+            this.opts = opts;
+        }
+
+        @Override
+        public MethodVisitor visitMethod(
+            int access,
+            String name,
+            String descriptor,
+            String signature,
+            String[] exceptions
+        ) {
+            if ("setBboxScale".equals(name)) {
+                // public void setBboxScale(org.bukkit.entity.Entity arg0, float arg1, float arg2) {
+                //   arg0.getHandle().setBboxScale(arg1, arg2);
+                // }
+                AZGeneratorAdapter mg = generateMethod(cv, access, name, descriptor, signature, exceptions);
+                mg.loadArg(0);
+                mg.invokeVirtual(
+                    t(opts.getCraftEntityClass()),
+                    new Method("getHandle", t(opts.getNmsEntityClass()), NO_ARGS)
+                );
+                mg.loadArg(1);
+                mg.loadArg(2);
+                mg.invokeVirtual(t(opts.getNmsEntityClass()), new Method("setBboxScale", "(FF)V"));
+                mg.returnValue();
+                mg.endMethod();
+                addInfo(cv, getClassName(), "Defined setBboxScale method");
+                return mg;
             }
-        );
-        return crw.getBytes();
+            return super.visitMethod(access, name, descriptor, signature, exceptions);
+        }
     }
 
-    private static byte[] transformEntityBase(ClassLoader loader, String className, byte[] bytes, Options opts) {
-        ClassRewriter crw = new ClassRewriter(loader, transformEntitySubclass(loader, className, bytes, opts));
-        crw.rewrite(
-            (api, cv) ->
-                new ClassVisitor(api, cv) {
-                    @Override
-                    public MethodVisitor visitMethod(
-                        int access,
-                        String name,
-                        String descriptor,
-                        String signature,
-                        String[] exceptions
-                    ) {
-                        if ("setSize".equals(name) && "(FF)V".equals(descriptor)) {
-                            // Rename setSize to setSizeInternal
-                            return super.visitMethod(access, "setSizeInternal", descriptor, signature, exceptions);
-                        }
-                        return super.visitMethod(access, name, descriptor, signature, exceptions);
-                    }
+    private static class EntitySuperclassTransformer extends EntitySubclassTransformer {
 
-                    @Override
-                    public void visitEnd() {
-                        addField(cv, Opcodes.ACC_PRIVATE, "bboxScaled", "Z");
-                        addField(cv, Opcodes.ACC_PRIVATE, "bboxScaleWidth", "F");
-                        addField(cv, Opcodes.ACC_PRIVATE, "bboxScaleLength", "F");
-                        addField(cv, Opcodes.ACC_PRIVATE, "unscaledWidth", "F");
-                        addField(cv, Opcodes.ACC_PRIVATE, "unscaledLength", "F");
+        public EntitySuperclassTransformer(int api, ClassVisitor cv, Options opts) {
+            super(api, cv, opts);
+        }
 
-                        // public float getUnscaledLength() {
-                        //   if (this.bboxScaled) {
-                        //     return this.unscaledLength;
-                        //   } else {
-                        //     return this.length;
-                        //   }
-                        // }
-                        GeneratorAdapter mg = generateMethod(
-                            cv,
-                            Opcodes.ACC_PUBLIC,
-                            "getUnscaledLength",
-                            Type.FLOAT_TYPE,
-                            NO_ARGS
-                        );
-                        mg.loadThis();
-                        mg.getField(Type.getObjectType(className), "bboxScaled", Type.BOOLEAN_TYPE);
-                        Label elseLabel = mg.newLabel();
-                        mg.ifZCmp(Opcodes.IFEQ, elseLabel);
-                        mg.loadThis();
-                        mg.getField(Type.getObjectType(className), "unscaledLength", Type.FLOAT_TYPE);
-                        mg.returnValue();
-                        mg.mark(elseLabel);
-                        mg.loadThis();
-                        mg.getField(Type.getObjectType(className), "length", Type.FLOAT_TYPE);
-                        mg.returnValue();
-                        mg.endMethod();
+        @Override
+        public MethodVisitor visitMethod(
+            int access,
+            String name,
+            String descriptor,
+            String signature,
+            String[] exceptions
+        ) {
+            if ("setSize".equals(name) && "(FF)V".equals(descriptor)) {
+                // Rename setSize to setSizeInternal
+                return super.visitMethod(access, "setSizeInternal", descriptor, signature, exceptions);
+            }
+            return super.visitMethod(access, name, descriptor, signature, exceptions);
+        }
 
-                        // public float getUnscaledWidth() {
-                        //   if (this.bboxScaled) {
-                        //     return this.unscaledWidth;
-                        //   } else {
-                        //     return this.width;
-                        //   }
-                        // }
-                        mg = generateMethod(cv, Opcodes.ACC_PUBLIC, "getUnscaledWidth", Type.FLOAT_TYPE, NO_ARGS);
-                        mg.loadThis();
-                        mg.getField(Type.getObjectType(className), "bboxScaled", Type.BOOLEAN_TYPE);
-                        elseLabel = mg.newLabel();
-                        mg.ifZCmp(Opcodes.IFEQ, elseLabel);
-                        mg.loadThis();
-                        mg.getField(Type.getObjectType(className), "unscaledWidth", Type.FLOAT_TYPE);
-                        mg.returnValue();
-                        mg.mark(elseLabel);
-                        mg.loadThis();
-                        mg.getField(Type.getObjectType(className), "width", Type.FLOAT_TYPE);
-                        mg.returnValue();
-                        mg.endMethod();
+        @Override
+        public void visitEnd() {
+            addField(cv, Opcodes.ACC_PRIVATE, "bboxScaled", "Z");
+            addField(cv, Opcodes.ACC_PRIVATE, "bboxScaleWidth", "F");
+            addField(cv, Opcodes.ACC_PRIVATE, "bboxScaleLength", "F");
+            addField(cv, Opcodes.ACC_PRIVATE, "unscaledWidth", "F");
+            addField(cv, Opcodes.ACC_PRIVATE, "unscaledLength", "F");
 
-                        // public void setSize(float arg0, float arg1) {
-                        //   this.unscaledWidth = arg0;
-                        //   this.unscaledLength = arg1;
-                        //   if (!bboxScaled) {
-                        //     this.setSizeInternal(arg0, arg1);
-                        //   } else {
-                        //     this.setSizeInternal(arg0 * this.bboxScaleWidth, arg1 * this.bboxScaleLength);
-                        //   }
-                        // }
-                        mg = generateMethod(
-                            cv,
-                            Opcodes.ACC_PUBLIC,
-                            "setSize",
-                            Type.VOID_TYPE,
-                            new Type[] { Type.FLOAT_TYPE, Type.FLOAT_TYPE }
-                        );
+            // public float getUnscaledLength() {
+            //   if (this.bboxScaled) {
+            //     return this.unscaledLength;
+            //   } else {
+            //     return this.length;
+            //   }
+            // }
+            AZGeneratorAdapter mg = generateMethod(cv, Opcodes.ACC_PUBLIC, "getUnscaledLength", FLOAT_TYPE, NO_ARGS);
+            mg.loadThis();
+            mg.getField(t(getClassName()), "bboxScaled", BOOLEAN_TYPE);
+            Label elseLabel = mg.newLabel();
+            mg.ifZCmp(Opcodes.IFEQ, elseLabel);
+            mg.loadThis();
+            mg.getField(t(getClassName()), "unscaledLength", FLOAT_TYPE);
+            mg.returnValue();
+            mg.mark(elseLabel);
+            mg.loadThis();
+            mg.getField(t(getClassName()), "length", FLOAT_TYPE);
+            mg.returnValue();
+            mg.endMethod();
 
-                        mg.loadThis();
-                        mg.loadArg(0);
-                        mg.putField(Type.getObjectType(className), "unscaledWidth", Type.FLOAT_TYPE);
+            // public float getUnscaledWidth() {
+            //   if (this.bboxScaled) {
+            //     return this.unscaledWidth;
+            //   } else {
+            //     return this.width;
+            //   }
+            // }
+            mg = generateMethod(cv, Opcodes.ACC_PUBLIC, "getUnscaledWidth", FLOAT_TYPE, NO_ARGS);
+            mg.loadThis();
+            mg.getField(t(getClassName()), "bboxScaled", BOOLEAN_TYPE);
+            elseLabel = mg.newLabel();
+            mg.ifZCmp(Opcodes.IFEQ, elseLabel);
+            mg.loadThis();
+            mg.getField(t(getClassName()), "unscaledWidth", FLOAT_TYPE);
+            mg.returnValue();
+            mg.mark(elseLabel);
+            mg.loadThis();
+            mg.getField(t(getClassName()), "width", FLOAT_TYPE);
+            mg.returnValue();
+            mg.endMethod();
 
-                        mg.loadThis();
-                        mg.loadArg(1);
-                        mg.putField(Type.getObjectType(className), "unscaledLength", Type.FLOAT_TYPE);
+            // public void setSize(float arg0, float arg1) {
+            //   this.unscaledWidth = arg0;
+            //   this.unscaledLength = arg1;
+            //   if (!bboxScaled) {
+            //     this.setSizeInternal(arg0, arg1);
+            //   } else {
+            //     this.setSizeInternal(arg0 * this.bboxScaleWidth, arg1 * this.bboxScaleLength);
+            //   }
+            // }
+            mg = generateMethod(cv, Opcodes.ACC_PUBLIC, "setSize", VOID_TYPE, new Type[] { FLOAT_TYPE, FLOAT_TYPE });
 
-                        elseLabel = mg.newLabel();
-                        mg.loadThis();
-                        mg.getField(Type.getObjectType(className), "bboxScaled", Type.BOOLEAN_TYPE);
-                        mg.ifZCmp(Opcodes.IFNE, elseLabel);
-                        mg.loadThis();
-                        mg.loadArg(0);
-                        mg.loadArg(1);
-                        mg.invokeVirtual(Type.getObjectType(className), new Method("setSizeInternal", "(FF)V"));
-                        mg.returnValue();
-                        mg.mark(elseLabel);
-                        mg.loadThis();
-                        mg.loadArg(0);
-                        mg.loadThis();
-                        mg.getField(Type.getObjectType(className), "bboxScaleWidth", Type.FLOAT_TYPE);
-                        mg.visitInsn(Opcodes.FMUL);
-                        mg.loadArg(1);
-                        mg.loadThis();
-                        mg.getField(Type.getObjectType(className), "bboxScaleLength", Type.FLOAT_TYPE);
-                        mg.visitInsn(Opcodes.FMUL);
-                        mg.invokeVirtual(Type.getObjectType(className), new Method("setSizeInternal", "(FF)V"));
+            mg.loadThis();
+            mg.loadArg(0);
+            mg.putField(t(getClassName()), "unscaledWidth", FLOAT_TYPE);
 
-                        mg.returnValue();
-                        mg.endMethod();
+            mg.loadThis();
+            mg.loadArg(1);
+            mg.putField(t(getClassName()), "unscaledLength", FLOAT_TYPE);
 
-                        // public void setBboxScale(float arg0, float arg1) {
-                        //   float unscaledWidth = this.getUnscaledWidth();
-                        //   float unscaledLength = this.getUnscaledLength();
-                        //   this.bboxScaled = arg0 != 1.0F || arg1 != 1.0F;
-                        //   this.bboxScaleWidth = arg0;
-                        //   this.bboxScaleLength = arg1;
-                        //   this.setSizeInternal(unscaledWidth * arg0, unscaledLength * arg1);
-                        // }
-                        mg = generateMethod(
-                            cv,
-                            Opcodes.ACC_PUBLIC,
-                            "setBboxScale",
-                            Type.VOID_TYPE,
-                            new Type[] { Type.FLOAT_TYPE, Type.FLOAT_TYPE }
-                        );
+            elseLabel = mg.newLabel();
+            mg.loadThis();
+            mg.getField(t(getClassName()), "bboxScaled", BOOLEAN_TYPE);
+            mg.ifZCmp(Opcodes.IFNE, elseLabel);
+            mg.loadThis();
+            mg.loadArg(0);
+            mg.loadArg(1);
+            mg.invokeVirtual(t(getClassName()), new Method("setSizeInternal", "(FF)V"));
+            mg.returnValue();
+            mg.mark(elseLabel);
+            mg.loadThis();
+            mg.loadArg(0);
+            mg.loadThis();
+            mg.getField(t(getClassName()), "bboxScaleWidth", FLOAT_TYPE);
+            mg.visitInsn(Opcodes.FMUL);
+            mg.loadArg(1);
+            mg.loadThis();
+            mg.getField(t(getClassName()), "bboxScaleLength", FLOAT_TYPE);
+            mg.visitInsn(Opcodes.FMUL);
+            mg.invokeVirtual(t(getClassName()), new Method("setSizeInternal", "(FF)V"));
 
-                        int unscaledWidth = mg.newLocal(Type.FLOAT_TYPE);
-                        mg.loadThis();
-                        mg.invokeVirtual(Type.getObjectType(className), new Method("getUnscaledWidth", "()F"));
-                        mg.storeLocal(unscaledWidth);
+            mg.returnValue();
+            mg.endMethod();
 
-                        int unscaledLength = mg.newLocal(Type.FLOAT_TYPE);
-                        mg.loadThis();
-                        mg.invokeVirtual(Type.getObjectType(className), new Method("getUnscaledLength", "()F"));
-                        mg.storeLocal(unscaledLength);
+            // public void setBboxScale(float arg0, float arg1) {
+            //   float unscaledWidth = this.getUnscaledWidth();
+            //   float unscaledLength = this.getUnscaledLength();
+            //   this.bboxScaled = arg0 != 1.0F || arg1 != 1.0F;
+            //   this.bboxScaleWidth = arg0;
+            //   this.bboxScaleLength = arg1;
+            //   this.setSizeInternal(unscaledWidth * arg0, unscaledLength * arg1);
+            // }
+            mg = generateMethod(
+                cv,
+                Opcodes.ACC_PUBLIC,
+                "setBboxScale",
+                VOID_TYPE,
+                new Type[] { FLOAT_TYPE, FLOAT_TYPE }
+            );
 
-                        mg.loadThis();
-                        Label elseLabel2 = mg.newLabel();
-                        mg.loadArg(0);
-                        mg.push(1.0F);
-                        mg.ifCmp(Type.FLOAT_TYPE, Opcodes.IFNE, elseLabel2);
-                        mg.loadArg(1);
-                        mg.push(1.0F);
-                        mg.ifCmp(Type.FLOAT_TYPE, Opcodes.IFNE, elseLabel2);
-                        mg.push(false);
-                        Label endLabel = mg.newLabel();
-                        mg.goTo(endLabel);
-                        mg.mark(elseLabel2);
-                        mg.push(true);
-                        mg.mark(endLabel);
-                        mg.putField(Type.getObjectType(className), "bboxScaled", Type.BOOLEAN_TYPE);
+            int unscaledWidth = mg.newLocal(FLOAT_TYPE);
+            mg.loadThis();
+            mg.invokeVirtual(t(getClassName()), new Method("getUnscaledWidth", "()F"));
+            mg.storeLocal(unscaledWidth);
 
-                        mg.loadThis();
-                        mg.loadArg(0);
-                        mg.putField(Type.getObjectType(className), "bboxScaleWidth", Type.FLOAT_TYPE);
+            int unscaledLength = mg.newLocal(FLOAT_TYPE);
+            mg.loadThis();
+            mg.invokeVirtual(t(getClassName()), new Method("getUnscaledLength", "()F"));
+            mg.storeLocal(unscaledLength);
 
-                        mg.loadThis();
-                        mg.loadArg(1);
-                        mg.putField(Type.getObjectType(className), "bboxScaleLength", Type.FLOAT_TYPE);
+            mg.loadThis();
+            Label elseLabel2 = mg.newLabel();
+            mg.loadArg(0);
+            mg.push(1.0F);
+            mg.ifCmp(FLOAT_TYPE, Opcodes.IFNE, elseLabel2);
+            mg.loadArg(1);
+            mg.push(1.0F);
+            mg.ifCmp(FLOAT_TYPE, Opcodes.IFNE, elseLabel2);
+            mg.push(false);
+            Label endLabel = mg.newLabel();
+            mg.goTo(endLabel);
+            mg.mark(elseLabel2);
+            mg.push(true);
+            mg.mark(endLabel);
+            mg.putField(t(getClassName()), "bboxScaled", BOOLEAN_TYPE);
 
-                        mg.loadThis();
-                        mg.loadLocal(unscaledWidth);
-                        mg.loadArg(0);
-                        mg.visitInsn(Opcodes.FMUL);
-                        mg.loadLocal(unscaledLength);
-                        mg.loadArg(1);
-                        mg.visitInsn(Opcodes.FMUL);
-                        mg.invokeVirtual(Type.getObjectType(className), new Method("setSizeInternal", "(FF)V"));
+            mg.loadThis();
+            mg.loadArg(0);
+            mg.putField(t(getClassName()), "bboxScaleWidth", FLOAT_TYPE);
 
-                        mg.returnValue();
-                        mg.endMethod();
+            mg.loadThis();
+            mg.loadArg(1);
+            mg.putField(t(getClassName()), "bboxScaleLength", FLOAT_TYPE);
 
-                        // public float getHeadHeight() {
-                        //   return CompatBridge.getHeadHeight(this.getBukkitEntity(), this.getUnscaledHeadHeight());
-                        // }
-                        mg = generateMethod(cv, Opcodes.ACC_PUBLIC, "getHeadHeight", Type.FLOAT_TYPE, NO_ARGS);
-                        mg.loadThis();
-                        mg.invokeVirtual(
-                            Type.getObjectType(opts.getNmsEntityClass()),
-                            new Method("getBukkitEntity", Type.getObjectType(opts.getCraftEntityClass()), NO_ARGS)
-                        );
-                        mg.loadThis();
-                        mg.invokeVirtual(Type.getObjectType(className), new Method("getUnscaledHeadHeight", "()F"));
-                        mg.invokeStatic(
-                            Type.getObjectType("fr/nathan818/azplugin/bukkit/compat/agent/CompatBridge"),
-                            new Method(
-                                "getHeadHeight",
-                                Type.FLOAT_TYPE,
-                                new Type[] { Type.getObjectType("org/bukkit/entity/Entity"), Type.FLOAT_TYPE }
-                            )
-                        );
-                        mg.returnValue();
-                        mg.endMethod();
+            mg.loadThis();
+            mg.loadLocal(unscaledWidth);
+            mg.loadArg(0);
+            mg.visitInsn(Opcodes.FMUL);
+            mg.loadLocal(unscaledLength);
+            mg.loadArg(1);
+            mg.visitInsn(Opcodes.FMUL);
+            mg.invokeVirtual(t(getClassName()), new Method("setSizeInternal", "(FF)V"));
 
-                        addInfo(cv, className, "Added custom-scale logic");
-                        super.visitEnd();
-                    }
-                },
-            ClassRewriter.DEFAULT_PARSING_OPTIONS | ClassReader.EXPAND_FRAMES,
-            ClassRewriter.DEFAULT_WRITER_FLAGS
-        );
-        return crw.getBytes();
+            mg.returnValue();
+            mg.endMethod();
+
+            // public float getHeadHeight() {
+            //   return CompatBridge.getHeadHeight(this.getBukkitEntity(), this.getUnscaledHeadHeight());
+            // }
+            mg = generateMethod(cv, Opcodes.ACC_PUBLIC, "getHeadHeight", FLOAT_TYPE, NO_ARGS);
+            mg.loadThis();
+            mg.invokeVirtual(
+                t(opts.getNmsEntityClass()),
+                new Method("getBukkitEntity", t(opts.getCraftEntityClass()), NO_ARGS)
+            );
+            mg.loadThis();
+            mg.invokeVirtual(t(getClassName()), new Method("getUnscaledHeadHeight", "()F"));
+            mg.invokeStatic(
+                t("fr/nathan818/azplugin/bukkit/compat/agent/CompatBridge"),
+                new Method("getHeadHeight", FLOAT_TYPE, new Type[] { t("org/bukkit/entity/Entity"), FLOAT_TYPE })
+            );
+            mg.returnValue();
+            mg.endMethod();
+
+            addInfo(cv, getClassName(), "Added custom-scale logic");
+            super.visitEnd();
+        }
     }
 
-    private static byte[] transformEntitySubclass(ClassLoader loader, String className, byte[] bytes, Options opts) {
-        ClassRewriter crw = new ClassRewriter(loader, bytes);
-        crw.rewrite(
-            (api, cv) ->
-                new ClassVisitor(api, cv) {
+    private static class EntitySubclassTransformer extends AZClassVisitor {
+
+        protected final Options opts;
+
+        public EntitySubclassTransformer(int api, ClassVisitor cv, Options opts) {
+            super(api, cv);
+            this.opts = opts;
+            expandFrames = true;
+        }
+
+        @Override
+        public MethodVisitor visitMethod(
+            int access,
+            String name,
+            String descriptor,
+            String signature,
+            String[] exceptions
+        ) {
+            if ("getHeadHeight".equals(name) && "()F".equals(descriptor)) {
+                // Rename getHeadHeight to getUnscaledHeadHeight
+                addInfo(cv, getClassName(), "Remapped getHeadHeight to getUnscaledHeadHeight");
+                return new MethodVisitor(
+                    api,
+                    super.visitMethod(access, "getUnscaledHeadHeight", descriptor, signature, exceptions)
+                ) {
                     @Override
-                    public MethodVisitor visitMethod(
-                        int access,
-                        String name,
-                        String descriptor,
-                        String signature,
-                        String[] exceptions
-                    ) {
-                        if ("getHeadHeight".equals(name) && "()F".equals(descriptor)) {
-                            // Rename getHeadHeight to getUnscaledHeadHeight
-                            addInfo(cv, className, "Remapped getHeadHeight to getUnscaledHeadHeight");
-                            return new MethodVisitor(
-                                api,
-                                super.visitMethod(access, "getUnscaledHeadHeight", descriptor, signature, exceptions)
-                            ) {
-                                @Override
-                                public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
-                                    if ("length".equals(name) && opts.getNmsEntityClass().equals(owner)) {
-                                        // Redirect length field access to getUnscaledLength()
-                                        super.visitMethodInsn(
-                                            Opcodes.INVOKEVIRTUAL,
-                                            owner,
-                                            "getUnscaledLength",
-                                            "()F",
-                                            false
-                                        );
-                                        return;
-                                    }
-                                    super.visitFieldInsn(opcode, owner, name, descriptor);
-                                }
-                            };
+                    public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
+                        if ("length".equals(name) && opts.getNmsEntityClass().equals(owner)) {
+                            // Redirect length field access to getUnscaledLength()
+                            super.visitMethodInsn(Opcodes.INVOKEVIRTUAL, owner, "getUnscaledLength", "()F", false);
+                            return;
                         }
-                        return super.visitMethod(access, name, descriptor, signature, exceptions);
+                        super.visitFieldInsn(opcode, owner, name, descriptor);
                     }
-                },
-            ClassRewriter.DEFAULT_PARSING_OPTIONS,
-            0
-        );
-        return crw.getBytes();
+                };
+            }
+            return super.visitMethod(access, name, descriptor, signature, exceptions);
+        }
     }
 
     @lombok.Builder(builderClassName = "Builder")

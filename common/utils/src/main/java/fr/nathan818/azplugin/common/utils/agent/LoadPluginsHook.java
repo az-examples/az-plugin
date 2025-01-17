@@ -3,7 +3,8 @@ package fr.nathan818.azplugin.common.utils.agent;
 import static fr.nathan818.azplugin.common.AZPlatform.log;
 
 import fr.nathan818.azplugin.common.utils.JvmMagic;
-import fr.nathan818.azplugin.common.utils.asm.ClassRewriter;
+import fr.nathan818.azplugin.common.utils.asm.AZClassVisitor;
+import fr.nathan818.azplugin.common.utils.asm.CtClassLoader;
 import java.net.URL;
 import java.util.function.Predicate;
 import java.util.logging.Level;
@@ -20,13 +21,11 @@ public class LoadPluginsHook {
 
     public static void register(Agent agent, Predicate<String> classNameFilter) {
         LoadPluginsHook.agent = agent;
-        agent.addTransformer(classNameFilter, (loader, className, bytes) -> {
-            ClassRewriter crw = new ClassRewriter(loader, bytes);
-            HookClassTransformer tr = crw.rewrite((api, cv) -> new HookClassTransformer(api, cv, "loadPlugins", "()V"));
+        agent.addTransformer(classNameFilter, clazz -> {
+            HookClassTransformer tr = clazz.rewrite(HookClassTransformer::new);
             if (tr.isHooked()) {
-                log(Level.INFO, "Successfully hooked into {0}.loadPlugins()", className);
+                log(Level.INFO, "Successfully hooked into {0}.loadPlugins()", clazz.getClassName());
             }
-            return crw.getBytes();
         });
     }
 
@@ -34,10 +33,11 @@ public class LoadPluginsHook {
     public static void onLoadPlugins() {
         try {
             // Ensure that all transformations are applied
-            initClass(PluginSupport.class);
+            initClass(AgentSupport.class);
             for (String className : agent.getClassesToPreload()) {
                 initClass(className.replace('/', '.'));
             }
+            CtClassLoader.disableCache();
 
             // Remove the plugin from the system class loader
             // (it must be loaded by the plugin class loader)
@@ -55,7 +55,7 @@ public class LoadPluginsHook {
                 }
             } while ((classLoader = classLoader.getParent()) != null);
         } catch (Throwable ex) {
-            throw PluginSupport.handleFatalError(ex);
+            throw AgentSupport.handleFatalError(ex);
         }
     }
 
@@ -66,18 +66,38 @@ public class LoadPluginsHook {
     private static void initClass(String className) {
         try {
             Class.forName(className, true, Thread.currentThread().getContextClassLoader());
-        } catch (ClassNotFoundException | LinkageError ex) {
-            if (Agent.DEBUG) {
-                ex.printStackTrace(System.err);
+        } catch (ClassNotFoundException ignored) {
+            // Ignore
+        } catch (Throwable ex) {
+            if (isClassNotFoundException(ex)) {
+                if (Agent.DEBUG) {
+                    log(Level.INFO, "[DEBUG] initClass failed: {0}", className, ex);
+                }
+                return;
             }
+            throw ex;
         }
     }
 
-    private static class HookClassTransformer extends ClassVisitor {
+    private static boolean isClassNotFoundException(Throwable ex) {
+        while (ex != null) {
+            if (ex instanceof ClassNotFoundException) {
+                return true;
+            }
+            ex = ex.getCause();
+        }
+        return false;
+    }
+
+    private static class HookClassTransformer extends AZClassVisitor {
 
         private final String targetMethod;
         private final String targetDescriptor;
         private @Getter boolean hooked;
+
+        public HookClassTransformer(int api, ClassVisitor cv) {
+            this(api, cv, "loadPlugins", "()V");
+        }
 
         public HookClassTransformer(int api, ClassVisitor cv, String targetMethod, String targetDescriptor) {
             super(api, cv);

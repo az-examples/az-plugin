@@ -14,7 +14,7 @@ public class AZBukkitShortcuts {
         return AZBukkit.api();
     }
 
-    @Contract(value = "null -> null; !null -> _", pure = true)
+    @Contract(value = "null -> null")
     public static @Nullable AZPlayer az(@Nullable Player player) {
         return AZBukkit.api().getClient(player);
     }

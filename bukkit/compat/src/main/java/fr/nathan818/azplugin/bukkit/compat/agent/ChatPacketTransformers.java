@@ -1,9 +1,9 @@
 package fr.nathan818.azplugin.bukkit.compat.agent;
 
-import static fr.nathan818.azplugin.common.utils.asm.AgentClassWriter.addInfo;
+import static fr.nathan818.azplugin.common.utils.asm.AZClassWriter.addInfo;
 
 import fr.nathan818.azplugin.common.utils.agent.Agent;
-import fr.nathan818.azplugin.common.utils.asm.ClassRewriter;
+import fr.nathan818.azplugin.common.utils.asm.AZClassVisitor;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -20,20 +20,17 @@ public class ChatPacketTransformers {
         int minRefCount,
         int maxRefCount
     ) {
-        agent.addTransformer(className, (loader, ignored, bytes) -> {
-            ClassRewriter crw = new ClassRewriter(loader, bytes);
-            crw.rewrite((api, cv) -> new ChatLimitTransformer(api, cv, defaultLimit, minRefCount, maxRefCount));
-            return crw.getBytes();
-        });
+        agent.addTransformer(className, (api, cv) ->
+            new ChatLimitTransformer(api, cv, defaultLimit, minRefCount, maxRefCount)
+        );
     }
 
-    private static class ChatLimitTransformer extends ClassVisitor {
+    private static class ChatLimitTransformer extends AZClassVisitor {
 
         private final int defaultLimit;
         private final int minRefCount;
         private final int maxRefCount;
 
-        private String className;
         private int refCount;
 
         public ChatLimitTransformer(
@@ -47,19 +44,6 @@ public class ChatPacketTransformers {
             this.defaultLimit = defaultLimit;
             this.minRefCount = minRefCount;
             this.maxRefCount = maxRefCount;
-        }
-
-        @Override
-        public void visit(
-            int version,
-            int access,
-            String name,
-            String signature,
-            String superName,
-            String[] interfaces
-        ) {
-            className = name;
-            super.visit(version, access, name, signature, superName, interfaces);
         }
 
         @Override
@@ -97,7 +81,7 @@ public class ChatPacketTransformers {
             if (refCount > 0 && cv != null) {
                 addInfo(
                     cv,
-                    className,
+                    getClassName(),
                     "Increased chat message limit from {0} to {1}",
                     defaultLimit,
                     NEW_CHAT_MESSAGE_LIMIT

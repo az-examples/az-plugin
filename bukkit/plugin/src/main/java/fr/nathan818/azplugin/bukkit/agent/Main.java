@@ -3,7 +3,7 @@ package fr.nathan818.azplugin.bukkit.agent;
 import static fr.nathan818.azplugin.common.AZPlatform.log;
 
 import fr.nathan818.azplugin.common.utils.JvmMagic;
-import fr.nathan818.azplugin.common.utils.agent.PluginSupport;
+import fr.nathan818.azplugin.common.utils.agent.AgentSupport;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.net.URL;
@@ -18,7 +18,7 @@ public class Main implements ClassFileTransformer {
 
     public static void premain(String agentArgs, Instrumentation inst) {
         try {
-            if (!PluginSupport.markAgentInjected(Main.class)) {
+            if (!AgentSupport.markAgentInjected(Main.class)) {
                 return;
             }
 
@@ -34,7 +34,7 @@ public class Main implements ClassFileTransformer {
             // Register the CraftBukkit Main class detector
             inst.addTransformer(new Main(agentArgs, inst));
         } catch (Throwable ex) {
-            throw PluginSupport.handleFatalError(ex);
+            throw AgentSupport.handleFatalError(ex);
         }
     }
 
@@ -69,7 +69,7 @@ public class Main implements ClassFileTransformer {
                 main2.getMethod("premain", String.class, Instrumentation.class).invoke(null, agentArgs, inst);
             }
         } catch (Throwable ex) {
-            throw PluginSupport.handleFatalError(ex);
+            throw AgentSupport.handleFatalError(ex);
         }
         return null;
     }

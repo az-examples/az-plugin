@@ -19,7 +19,7 @@ import lombok.Lombok;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
-public class PluginSupport {
+public class AgentSupport {
 
     private static final PrintStream systemErr;
     private static boolean agentLoaded = false;
@@ -30,25 +30,25 @@ public class PluginSupport {
     }
 
     public static synchronized boolean markAgentInjected(Class<?> agentMainClass) {
-        if (PluginSupport.agentMainClass != null) {
+        if (AgentSupport.agentMainClass != null) {
             return false;
         }
-        PluginSupport.agentMainClass = agentMainClass;
+        AgentSupport.agentMainClass = agentMainClass;
         log(Level.INFO, "Successfully injected agent");
         return true;
     }
 
     public static synchronized void markAgentLoaded(Class<?> agentMainClass) {
-        if (PluginSupport.agentMainClass == agentMainClass) {
-            PluginSupport.agentLoaded = true;
+        if (AgentSupport.agentMainClass == agentMainClass) {
+            AgentSupport.agentLoaded = true;
         }
     }
 
     public static synchronized void assertAgentLoaded(Class<?> agentMainClass) {
-        if (PluginSupport.agentMainClass == agentMainClass && PluginSupport.agentLoaded) {
+        if (AgentSupport.agentMainClass == agentMainClass && AgentSupport.agentLoaded) {
             return;
         }
-        PluginSupport.agentMainClass = agentMainClass;
+        AgentSupport.agentMainClass = agentMainClass;
         throw new IllegalStateException("Agent not loaded!");
     }
 
@@ -126,7 +126,7 @@ public class PluginSupport {
     }
 
     private static String getAgentPath() {
-        Class<?> agentClass = PluginSupport.agentMainClass;
+        Class<?> agentClass = AgentSupport.agentMainClass;
         if (agentClass == null) {
             return "path/to/az-plugin-agent.jar";
         }

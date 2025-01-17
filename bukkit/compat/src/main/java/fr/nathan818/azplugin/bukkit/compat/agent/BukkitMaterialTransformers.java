@@ -5,17 +5,17 @@ import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.asMethod;
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.createConstructor;
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.defineConstantGetter;
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.generateMethod;
+import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.t;
+import static org.objectweb.asm.Type.INT_TYPE;
 
 import fr.nathan818.azplugin.bukkit.compat.material.BukkitMaterialDefinition;
 import fr.nathan818.azplugin.common.utils.agent.Agent;
+import fr.nathan818.azplugin.common.utils.asm.AZClassWriter;
+import fr.nathan818.azplugin.common.utils.asm.AZGeneratorAdapter;
 import fr.nathan818.azplugin.common.utils.asm.AddEnumConstantTransformer;
-import fr.nathan818.azplugin.common.utils.asm.AgentClassWriter;
-import fr.nathan818.azplugin.common.utils.asm.ClassRewriter;
 import java.util.stream.Collectors;
-import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 
 /**
@@ -23,68 +23,51 @@ import org.objectweb.asm.commons.Method;
  */
 public class BukkitMaterialTransformers {
 
-    private static final Type BUKKIT_MATERIAL_TYPE = Type.getObjectType("org/bukkit/Material");
+    private static final String BUKKIT_MATERIAL = "org/bukkit/Material";
     private static final Method MATERIAL_SUBCLASS_CONSTRUCTOR = createConstructor(
-        Type.getType(String.class), // enum name
-        Type.INT_TYPE, // enum ordinal
-        Type.INT_TYPE, // id
-        Type.INT_TYPE, // stack
-        Type.INT_TYPE // durability
+        t(String.class), // enum name
+        INT_TYPE, // enum ordinal
+        INT_TYPE, // id
+        INT_TYPE, // stack
+        INT_TYPE // durability
     );
 
     public static void register(Agent agent) {
-        agent.addTransformer(BUKKIT_MATERIAL_TYPE.getInternalName(), BukkitMaterialTransformers::transformMaterialEnum);
+        agent.addTransformer(
+            BUKKIT_MATERIAL,
+            AddEnumConstantTransformer::new,
+            MATERIALS.stream()
+                .map(material ->
+                    new AddEnumConstantTransformer.EnumConstant(material.getName(), (mg, type, name, ordinal) -> {
+                        Type subclassType = t(getMaterialSubclass(material));
+                        mg.newInstance(subclassType);
+                        mg.dup();
+                        mg.push(name);
+                        mg.push(ordinal);
+                        mg.push(material.getId());
+                        mg.push(material.getStack());
+                        mg.push(material.getDurability());
+                        mg.invokeConstructor(subclassType, MATERIAL_SUBCLASS_CONSTRUCTOR);
+                    })
+                )
+                .collect(Collectors.toList())
+        );
         for (BukkitMaterialDefinition material : MATERIALS) {
-            agent.addTransformer(getMaterialSubclassType(material).getInternalName(), (loader, ignored1, ignored2) ->
-                createMaterialSubclass(loader, material)
+            agent.addTransformer(getMaterialSubclass(material), clazz ->
+                clazz.write(cw -> createMaterialSubclass(cw, material))
             );
         }
     }
 
-    private static byte[] transformMaterialEnum(ClassLoader loader, String className, byte[] bytes) {
-        ClassRewriter crw = new ClassRewriter(loader, bytes);
-        crw.rewrite((api, cv) ->
-            new AddEnumConstantTransformer(
-                api,
-                cv,
-                MATERIALS.stream()
-                    .map(material ->
-                        new AddEnumConstantTransformer.EnumConstant(material.getName(), (mg, type, name, ordinal) -> {
-                            Type subclassType = getMaterialSubclassType(material);
-                            mg.newInstance(subclassType);
-                            mg.dup();
-                            mg.push(name);
-                            mg.push(ordinal);
-                            mg.push(material.getId());
-                            mg.push(material.getStack());
-                            mg.push(material.getDurability());
-                            mg.invokeConstructor(subclassType, MATERIAL_SUBCLASS_CONSTRUCTOR);
-                        })
-                    )
-                    .collect(Collectors.toList())
-            )
-        );
-        return crw.getBytes();
-    }
-
-    private static byte[] createMaterialSubclass(ClassLoader loader, BukkitMaterialDefinition material) {
-        ClassWriter cw = new AgentClassWriter(loader, ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
-
+    private static void createMaterialSubclass(AZClassWriter cw, BukkitMaterialDefinition material) {
         // Define Material subclass
-        cw.visit(
-            Opcodes.V1_8,
-            Opcodes.ACC_PUBLIC,
-            getMaterialSubclassType(material).getInternalName(),
-            null,
-            BUKKIT_MATERIAL_TYPE.getInternalName(),
-            null
-        );
+        cw.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, getMaterialSubclass(material), null, BUKKIT_MATERIAL, null);
 
         // Define constructor (calls super)
-        GeneratorAdapter mg = generateMethod(cw, Opcodes.ACC_PUBLIC, MATERIAL_SUBCLASS_CONSTRUCTOR);
+        AZGeneratorAdapter mg = generateMethod(cw, Opcodes.ACC_PUBLIC, MATERIAL_SUBCLASS_CONSTRUCTOR);
         mg.loadThis();
         mg.loadArgs();
-        mg.invokeConstructor(BUKKIT_MATERIAL_TYPE, asMethod(mg));
+        mg.invokeConstructor(t(BUKKIT_MATERIAL), asMethod(mg));
         mg.returnValue();
         mg.endMethod();
 
@@ -100,10 +83,9 @@ public class BukkitMaterialTransformers {
 
         // Finish
         cw.visitEnd();
-        return cw.toByteArray();
     }
 
-    private static Type getMaterialSubclassType(BukkitMaterialDefinition material) {
-        return Type.getObjectType("fr/nathan818/azplugin/bukkit/compat/agent/RtClass$Material" + material.getId());
+    private static String getMaterialSubclass(BukkitMaterialDefinition material) {
+        return "fr/nathan818/azplugin/bukkit/compat/agent/RtClass$Material" + material.getId();
     }
 }

@@ -15,7 +15,7 @@ import fr.nathan818.azplugin.bukkit.plugin.entity.EntityManager;
 import fr.nathan818.azplugin.bukkit.plugin.material.MaterialManager;
 import fr.nathan818.azplugin.common.item.NotchianItemStackLike;
 import fr.nathan818.azplugin.common.network.AZPacketBuffer;
-import fr.nathan818.azplugin.common.utils.agent.PluginSupport;
+import fr.nathan818.azplugin.common.utils.agent.AgentSupport;
 import java.io.Reader;
 import java.util.logging.Level;
 import org.bukkit.Bukkit;
@@ -39,7 +39,7 @@ public class AZPlugin extends JavaPlugin implements AZBukkitPlatform {
     @Override
     public void onLoad() {
         try {
-            PluginSupport.assertAgentLoaded(Main.class);
+            AgentSupport.assertAgentLoaded(Main.class);
             AZBukkit.init(this);
             BukkitCompat compat = compat();
             if (compat == null) {
@@ -51,7 +51,7 @@ public class AZPlugin extends JavaPlugin implements AZBukkitPlatform {
             materialManager.registerMaterials(); // Custom blocks and items need to be registered early
             log(Level.INFO, "Loaded!");
         } catch (Throwable ex) {
-            throw PluginSupport.handleFatalError(ex, Bukkit::shutdown);
+            throw AgentSupport.handleFatalError(ex, Bukkit::shutdown);
         }
     }
 

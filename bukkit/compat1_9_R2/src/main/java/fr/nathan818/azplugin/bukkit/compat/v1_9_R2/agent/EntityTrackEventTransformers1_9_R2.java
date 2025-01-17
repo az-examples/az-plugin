@@ -2,53 +2,36 @@ package fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent;
 
 import static fr.nathan818.azplugin.bukkit.compat.agent.BukkitAgentCompat.CALL_ENTITY_TRACK_BEGIN_EVENT;
 import static fr.nathan818.azplugin.bukkit.compat.agent.BukkitAgentCompat.invokeCompatBridge;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.CraftEntity1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.CraftPlayer1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.Entity1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.EntityPlayer1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.EntityTrackerEntry1_9_R2;
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.NO_ARGS;
-import static fr.nathan818.azplugin.common.utils.asm.AgentClassWriter.addInfo;
+import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.t;
+import static fr.nathan818.azplugin.common.utils.asm.AZClassWriter.addInfo;
 
 import fr.nathan818.azplugin.common.utils.agent.Agent;
-import fr.nathan818.azplugin.common.utils.asm.ClassRewriter;
-import org.objectweb.asm.ClassReader;
+import fr.nathan818.azplugin.common.utils.asm.AZClassVisitor;
+import fr.nathan818.azplugin.common.utils.asm.AZGeneratorAdapter;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 
 public class EntityTrackEventTransformers1_9_R2 {
 
     public static void register(Agent agent) {
-        agent.addTransformer("net/minecraft/server/v1_9_R2/EntityTrackerEntry", (loader, className, bytes) -> {
-            ClassRewriter crw = new ClassRewriter(loader, bytes);
-            crw.rewrite(
-                EntityTrackerEntryTransformer::new,
-                ClassRewriter.DEFAULT_PARSING_OPTIONS | ClassReader.EXPAND_FRAMES,
-                ClassRewriter.DEFAULT_WRITER_FLAGS
-            );
-            return crw.getBytes();
-        });
+        agent.addTransformer(EntityTrackerEntry1_9_R2, EntityTrackerEntryTransformer::new);
     }
 
-    private static class EntityTrackerEntryTransformer extends ClassVisitor {
+    private static class EntityTrackerEntryTransformer extends AZClassVisitor {
 
-        private String className;
         private boolean inserted;
 
         public EntityTrackerEntryTransformer(int api, ClassVisitor cv) {
             super(api, cv);
-        }
-
-        @Override
-        public void visit(
-            int version,
-            int access,
-            String name,
-            String signature,
-            String superName,
-            String[] interfaces
-        ) {
-            className = name;
-            super.visit(version, access, name, signature, superName, interfaces);
+            expandFrames = true;
         }
 
         @Override
@@ -61,7 +44,7 @@ public class EntityTrackEventTransformers1_9_R2 {
         ) {
             MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
             if ("updatePlayer".equals(name)) {
-                return new GeneratorAdapter(api, mv, access, name, descriptor) {
+                return new AZGeneratorAdapter(api, mv, access, name, descriptor) {
                     @Override
                     public void visitMethodInsn(
                         int opcode,
@@ -73,9 +56,9 @@ public class EntityTrackEventTransformers1_9_R2 {
                         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
                         if (
                             opcode == Opcodes.INVOKEVIRTUAL &&
-                            "net/minecraft/server/v1_9_R2/EntityPlayer".equals(owner) &&
+                            EntityPlayer1_9_R2.equals(owner) &&
                             "d".equals(name) &&
-                            "(Lnet/minecraft/server/v1_9_R2/Entity;)V".equals(descriptor)
+                            ("(L" + Entity1_9_R2 + ";)V").equals(descriptor)
                         ) {
                             inserted = true;
                             insertCallEntityTrackBeginEvent(this);
@@ -89,36 +72,18 @@ public class EntityTrackEventTransformers1_9_R2 {
         @Override
         public void visitEnd() {
             if (inserted) {
-                addInfo(cv, className, "Added EntityTrackBeginEvent calls");
+                addInfo(cv, getClassName(), "Added EntityTrackBeginEvent calls");
             }
             super.visitEnd();
         }
 
-        private void insertCallEntityTrackBeginEvent(GeneratorAdapter mg) {
+        private void insertCallEntityTrackBeginEvent(AZGeneratorAdapter mg) {
             // CompatBridge.callEntityTrackBeginEvent(this.tracker.getBukkitEntity(), entityplayer.getBukkitEntity());
             mg.loadThis();
-            mg.getField(
-                Type.getObjectType("net/minecraft/server/v1_9_R2/EntityTrackerEntry"),
-                "tracker",
-                Type.getObjectType("net/minecraft/server/v1_9_R2/Entity")
-            );
-            mg.invokeVirtual(
-                Type.getObjectType("net/minecraft/server/v1_9_R2/Entity"),
-                new Method(
-                    "getBukkitEntity",
-                    Type.getObjectType("org/bukkit/craftbukkit/v1_9_R2/entity/CraftEntity"),
-                    NO_ARGS
-                )
-            );
+            mg.getField(t(EntityTrackerEntry1_9_R2), "tracker", t(Entity1_9_R2));
+            mg.invokeVirtual(t(Entity1_9_R2), new Method("getBukkitEntity", t(CraftEntity1_9_R2), NO_ARGS));
             mg.loadArg(0);
-            mg.invokeVirtual(
-                Type.getObjectType("net/minecraft/server/v1_9_R2/EntityPlayer"),
-                new Method(
-                    "getBukkitEntity",
-                    Type.getObjectType("org/bukkit/craftbukkit/v1_9_R2/entity/CraftPlayer"),
-                    NO_ARGS
-                )
-            );
+            mg.invokeVirtual(t(EntityPlayer1_9_R2), new Method("getBukkitEntity", t(CraftPlayer1_9_R2), NO_ARGS));
             invokeCompatBridge(mg, CALL_ENTITY_TRACK_BEGIN_EVENT);
         }
     }

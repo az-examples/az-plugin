@@ -2,37 +2,34 @@ package fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent;
 
 import static fr.nathan818.azplugin.bukkit.compat.agent.BukkitAgentCompat.CALL_ENTITY_TRACK_BEGIN_EVENT;
 import static fr.nathan818.azplugin.bukkit.compat.agent.BukkitAgentCompat.invokeCompatBridge;
+import static fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent.Dictionary1_8_R3.CraftEntity1_8_R3;
+import static fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent.Dictionary1_8_R3.CraftPlayer1_8_R3;
+import static fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent.Dictionary1_8_R3.Entity1_8_R3;
+import static fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent.Dictionary1_8_R3.EntityPlayer1_8_R3;
+import static fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent.Dictionary1_8_R3.EntityTrackerEntry1_8_R3;
+import static fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent.Dictionary1_8_R3.Packet1_8_R3;
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.NO_ARGS;
-import static fr.nathan818.azplugin.common.utils.asm.AgentClassWriter.addInfo;
+import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.t;
+import static fr.nathan818.azplugin.common.utils.asm.AZClassWriter.addInfo;
+import static org.objectweb.asm.Type.BOOLEAN_TYPE;
 
 import fr.nathan818.azplugin.common.utils.agent.Agent;
-import fr.nathan818.azplugin.common.utils.asm.ClassRewriter;
-import org.objectweb.asm.ClassReader;
+import fr.nathan818.azplugin.common.utils.asm.AZClassVisitor;
+import fr.nathan818.azplugin.common.utils.asm.AZGeneratorAdapter;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 
 public class EntityTrackEventTransformers1_8_R3 {
 
     public static void register(Agent agent) {
-        agent.addTransformer("net/minecraft/server/v1_8_R3/EntityTrackerEntry", (loader, className, bytes) -> {
-            ClassRewriter crw = new ClassRewriter(loader, bytes);
-            crw.rewrite(
-                EntityTrackerEntryTransformer::new,
-                ClassRewriter.DEFAULT_PARSING_OPTIONS | ClassReader.EXPAND_FRAMES,
-                ClassRewriter.DEFAULT_WRITER_FLAGS
-            );
-            return crw.getBytes();
-        });
+        agent.addTransformer(EntityTrackerEntry1_8_R3, EntityTrackerEntryTransformer::new);
     }
 
-    private static class EntityTrackerEntryTransformer extends ClassVisitor {
+    private static class EntityTrackerEntryTransformer extends AZClassVisitor {
 
-        private String className;
         private boolean inserted;
 
         private int flagLocalIndex = -1;
@@ -41,19 +38,7 @@ public class EntityTrackEventTransformers1_8_R3 {
 
         public EntityTrackerEntryTransformer(int api, ClassVisitor cv) {
             super(api, cv);
-        }
-
-        @Override
-        public void visit(
-            int version,
-            int access,
-            String name,
-            String signature,
-            String superName,
-            String[] interfaces
-        ) {
-            className = name;
-            super.visit(version, access, name, signature, superName, interfaces);
+            expandFrames = true;
         }
 
         @Override
@@ -66,11 +51,11 @@ public class EntityTrackEventTransformers1_8_R3 {
         ) {
             MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
             if ("updatePlayer".equals(name)) {
-                return new GeneratorAdapter(api, mv, access, name, descriptor) {
+                return new AZGeneratorAdapter(api, mv, access, name, descriptor) {
                     @Override
                     public void visitCode() {
                         // boolean flag = false;
-                        flagLocalIndex = newLocal(Type.BOOLEAN_TYPE);
+                        flagLocalIndex = newLocal(BOOLEAN_TYPE);
                         push(false);
                         storeLocal(flagLocalIndex);
                         super.visitCode();
@@ -87,9 +72,9 @@ public class EntityTrackEventTransformers1_8_R3 {
                         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
                         if (
                             opcode == Opcodes.INVOKESPECIAL &&
-                            "net/minecraft/server/v1_8_R3/EntityTrackerEntry".equals(owner) &&
+                            EntityTrackerEntry1_8_R3.equals(owner) &&
                             "c".equals(name) &&
-                            "()Lnet/minecraft/server/v1_8_R3/Packet;".equals(descriptor)
+                            ("()L" + Packet1_8_R3 + ";").equals(descriptor)
                         ) {
                             invokeCreateSpawnPacket = true;
                         }
@@ -128,36 +113,18 @@ public class EntityTrackEventTransformers1_8_R3 {
         @Override
         public void visitEnd() {
             if (inserted) {
-                addInfo(cv, className, "Added EntityTrackBeginEvent calls");
+                addInfo(cv, getClassName(), "Added EntityTrackBeginEvent calls");
             }
             super.visitEnd();
         }
 
-        private void insertCallEntityTrackBeginEvent(GeneratorAdapter mg) {
+        private void insertCallEntityTrackBeginEvent(AZGeneratorAdapter mg) {
             // CompatBridge.callEntityTrackBeginEvent(this.tracker.getBukkitEntity(), entityplayer.getBukkitEntity());
             mg.loadThis();
-            mg.getField(
-                Type.getObjectType("net/minecraft/server/v1_8_R3/EntityTrackerEntry"),
-                "tracker",
-                Type.getObjectType("net/minecraft/server/v1_8_R3/Entity")
-            );
-            mg.invokeVirtual(
-                Type.getObjectType("net/minecraft/server/v1_8_R3/Entity"),
-                new Method(
-                    "getBukkitEntity",
-                    Type.getObjectType("org/bukkit/craftbukkit/v1_8_R3/entity/CraftEntity"),
-                    NO_ARGS
-                )
-            );
+            mg.getField(t(EntityTrackerEntry1_8_R3), "tracker", t(Entity1_8_R3));
+            mg.invokeVirtual(t(Entity1_8_R3), new Method("getBukkitEntity", t(CraftEntity1_8_R3), NO_ARGS));
             mg.loadArg(0);
-            mg.invokeVirtual(
-                Type.getObjectType("net/minecraft/server/v1_8_R3/EntityPlayer"),
-                new Method(
-                    "getBukkitEntity",
-                    Type.getObjectType("org/bukkit/craftbukkit/v1_8_R3/entity/CraftPlayer"),
-                    NO_ARGS
-                )
-            );
+            mg.invokeVirtual(t(EntityPlayer1_8_R3), new Method("getBukkitEntity", t(CraftPlayer1_8_R3), NO_ARGS));
             invokeCompatBridge(mg, CALL_ENTITY_TRACK_BEGIN_EVENT);
         }
     }

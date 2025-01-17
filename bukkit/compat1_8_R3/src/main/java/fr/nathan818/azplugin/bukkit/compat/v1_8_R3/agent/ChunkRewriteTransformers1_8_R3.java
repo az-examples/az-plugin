@@ -1,267 +1,254 @@
 package fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent;
 
-import static fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent.BukkitAgentCompat1_8_R3.COMPAT_BRIDGE1_8_R3;
+import static fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent.Dictionary1_8_R3.ChunkMap1_8_R3;
+import static fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent.Dictionary1_8_R3.CompatBridge1_8_R3;
+import static fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent.Dictionary1_8_R3.EntityPlayer1_8_R3;
+import static fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent.Dictionary1_8_R3.PacketDataSerializer1_8_R3;
+import static fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent.Dictionary1_8_R3.PacketPlayOutBlockChange1_8_R3;
+import static fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent.Dictionary1_8_R3.PacketPlayOutMapChunk1_8_R3;
+import static fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent.Dictionary1_8_R3.PacketPlayOutMapChunkBulk1_8_R3;
+import static fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent.Dictionary1_8_R3.PacketPlayOutMultiBlockChange1_8_R3;
+import static fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent.Dictionary1_8_R3.RegistryID1_8_R3;
+import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.BYTE_ARRAY_TYPE;
+import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.arrayType;
+import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.t;
+import static org.objectweb.asm.Type.BOOLEAN_TYPE;
+import static org.objectweb.asm.Type.INT_TYPE;
+import static org.objectweb.asm.Type.VOID_TYPE;
 
 import fr.nathan818.azplugin.common.utils.agent.Agent;
-import fr.nathan818.azplugin.common.utils.asm.ASMUtil;
-import fr.nathan818.azplugin.common.utils.asm.ClassRewriter;
-import org.objectweb.asm.ClassReader;
+import fr.nathan818.azplugin.common.utils.asm.AZClassVisitor;
+import fr.nathan818.azplugin.common.utils.asm.AZGeneratorAdapter;
+import fr.nathan818.azplugin.common.utils.asm.BufferedGeneratorAdapter;
+import fr.nathan818.azplugin.common.utils.asm.BufferedMethodVisitor.VarInsn;
+import fr.nathan818.azplugin.common.utils.asm.BufferedMethodVisitor.Visit;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.commons.GeneratorAdapter;
 import org.objectweb.asm.commons.Method;
 
 public class ChunkRewriteTransformers1_8_R3 {
 
     public static void register(Agent agent) {
-        agent.addTransformer("net/minecraft/server/v1_8_R3/PacketPlayOutMapChunk", (loader, className, bytes) ->
-            transformPacketChunk(loader, className, bytes, false)
-        );
-        agent.addTransformer("net/minecraft/server/v1_8_R3/PacketPlayOutMapChunkBulk", (loader, className, bytes) ->
-            transformPacketChunk(loader, className, bytes, true)
-        );
-        agent.addTransformer(
-            "net/minecraft/server/v1_8_R3/PacketPlayOutBlockChange",
-            ChunkRewriteTransformers1_8_R3::transformPacketBlockChange
-        );
-        agent.addTransformer(
-            "net/minecraft/server/v1_8_R3/PacketPlayOutMultiBlockChange",
-            ChunkRewriteTransformers1_8_R3::transformPacketBlockChange
-        );
+        agent.addTransformer(PacketPlayOutMapChunk1_8_R3, PacketChunkTransformer::new);
+        agent.addTransformer(PacketPlayOutMapChunkBulk1_8_R3, PacketChunkBulkTransformer::new);
+        agent.addTransformer(PacketPlayOutBlockChange1_8_R3, PacketBlockChangeTransformer::new);
+        agent.addTransformer(PacketPlayOutMultiBlockChange1_8_R3, PacketBlockChangeTransformer::new);
     }
 
-    public static byte[] transformPacketChunk(ClassLoader loader, String className, byte[] bytes, boolean multi) {
-        ClassRewriter crw = new ClassRewriter(loader, bytes);
-        crw.rewrite(
-            (api, cv) ->
-                new ClassVisitor(api, cv) {
+    private static class PacketChunkTransformer extends AZClassVisitor {
+
+        public PacketChunkTransformer(int api, ClassVisitor cv) {
+            super(api, cv);
+            expandFrames = true;
+        }
+
+        @Override
+        public MethodVisitor visitMethod(
+            int access,
+            String name,
+            String descriptor,
+            String signature,
+            String[] exceptions
+        ) {
+            if ("b".equals(name) && ("(L" + PacketDataSerializer1_8_R3 + ";)V").equals(descriptor)) {
+                // public void b(PacketDataSerializer buf) {
+                //   [...]
+                //  -[buf.a(this.c.a);]
+                //  +CompatBridgeXXX.writeChunkData(buf, buf.nmsPlayer, this.c.a, this.c.b, this.d, true);
+                //   [...]
+                // }
+                return new BufferedGeneratorAdapter(api, cv, access, name, descriptor, signature, exceptions) {
+                    private boolean inserted;
+
                     @Override
-                    public MethodVisitor visitMethod(
-                        int access,
-                        String name,
-                        String descriptor,
-                        String signature,
-                        String[] exceptions
-                    ) {
-                        if (
-                            "b".equals(name) &&
-                            "(Lnet/minecraft/server/v1_8_R3/PacketDataSerializer;)V".equals(descriptor)
-                        ) {
-                            // public void b(PacketDataSerializer buf) {
-                            //   [...]
-                            //  -[buf.a|writeBytes(this.c[...].a)]
-                            //  +CompatBridgeXXX.writeChunkData(buf, buf.nmsPlayer, this.c[...].a, this.c[...].b, this.d, true|false);
-                            //   [...]
-                            // }
-                            return new GeneratorAdapter(
-                                api,
-                                super.visitMethod(access, name, descriptor, signature, exceptions),
-                                access,
-                                name,
-                                descriptor
-                            ) {
-                                private boolean cField;
-                                private boolean caField;
-                                private int lastIloadIndex = -1;
-                                private boolean ignoreNextPop;
-                                private boolean inserted;
-
-                                @Override
-                                public void visitInsn(int opcode) {
-                                    if (ignoreNextPop && opcode == Opcodes.POP) {
-                                        ignoreNextPop = false;
-                                        return;
-                                    }
-                                    super.visitInsn(opcode);
-                                }
-
-                                @Override
-                                public void visitVarInsn(int opcode, int varIndex) {
-                                    if (opcode == Opcodes.ILOAD) {
-                                        lastIloadIndex = varIndex;
-                                    }
-                                    super.visitIntInsn(opcode, varIndex);
-                                }
-
-                                @Override
-                                public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
-                                    caField = (cField &&
-                                        "a".equals(name) &&
-                                        "net/minecraft/server/v1_8_R3/PacketPlayOutMapChunk$ChunkMap".equals(owner) &&
-                                        "[B".equals(descriptor));
-                                    cField = ("c".equals(name) &&
-                                        className.equals(owner) &&
-                                        descriptor.contains(
-                                            "net/minecraft/server/v1_8_R3/PacketPlayOutMapChunk$ChunkMap"
-                                        ));
-                                    super.visitFieldInsn(opcode, owner, name, descriptor);
-                                }
-
-                                @Override
-                                public void visitMethodInsn(
-                                    int opcode,
-                                    String owner,
-                                    String name,
-                                    String descriptor,
-                                    boolean isInterface
-                                ) {
-                                    if (
-                                        !inserted &&
-                                        caField &&
-                                        opcode == Opcodes.INVOKEVIRTUAL &&
-                                        (multi ? "writeBytes" : "a").equals(name) &&
-                                        "net/minecraft/server/v1_8_R3/PacketDataSerializer".equals(owner)
-                                    ) {
-                                        inserted = true;
-                                        ignoreNextPop = true;
-                                        loadArg(0);
-                                        getField(
-                                            Type.getObjectType(owner),
-                                            "nmsPlayer",
-                                            Type.getObjectType("net/minecraft/server/v1_8_R3/EntityPlayer")
-                                        );
-                                        swap();
-                                        loadThis();
-                                        if (multi) {
-                                            getField(
-                                                Type.getObjectType(className),
-                                                "c",
-                                                ASMUtil.arrayType(
-                                                    Type.getObjectType(
-                                                        "net/minecraft/server/v1_8_R3/PacketPlayOutMapChunk$ChunkMap"
-                                                    )
-                                                )
-                                            );
-                                            loadLocal(lastIloadIndex);
-                                            arrayLoad(
-                                                Type.getObjectType(
-                                                    "net/minecraft/server/v1_8_R3/PacketPlayOutMapChunk$ChunkMap"
-                                                )
-                                            );
-                                        } else {
-                                            getField(
-                                                Type.getObjectType(className),
-                                                "c",
-                                                Type.getObjectType(
-                                                    "net/minecraft/server/v1_8_R3/PacketPlayOutMapChunk$ChunkMap"
-                                                )
-                                            );
-                                        }
-                                        getField(
-                                            Type.getObjectType(
-                                                "net/minecraft/server/v1_8_R3/PacketPlayOutMapChunk$ChunkMap"
-                                            ),
-                                            "b",
-                                            Type.INT_TYPE
-                                        );
-                                        loadThis();
-                                        getField(Type.getObjectType(className), "d", Type.BOOLEAN_TYPE);
-                                        push("a".equals(name));
-                                        invokeStatic(
-                                            Type.getObjectType(COMPAT_BRIDGE1_8_R3),
-                                            new Method(
-                                                "writeChunkData",
-                                                Type.VOID_TYPE,
-                                                new Type[] {
-                                                    Type.getObjectType(
-                                                        "net/minecraft/server/v1_8_R3/PacketDataSerializer"
-                                                    ),
-                                                    Type.getObjectType("net/minecraft/server/v1_8_R3/EntityPlayer"),
-                                                    Type.getType(byte[].class),
-                                                    Type.INT_TYPE,
-                                                    Type.BOOLEAN_TYPE,
-                                                    Type.BOOLEAN_TYPE,
-                                                }
-                                            )
-                                        );
-                                        return;
-                                    }
-                                    super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
-                                }
-                            };
+                    public void visit(Visit visit) {
+                        if (!inserted && isWriteChunkData()) {
+                            inserted = true;
+                            redirectToCompatWriteChunkData();
                         }
-                        return super.visitMethod(access, name, descriptor, signature, exceptions);
                     }
-                },
-            ClassRewriter.DEFAULT_PARSING_OPTIONS | ClassReader.EXPAND_FRAMES,
-            ClassRewriter.DEFAULT_WRITER_FLAGS
-        );
-        return crw.getBytes();
+
+                    private boolean isWriteChunkData() {
+                        return (
+                            isInvokeVirtual(0, PacketDataSerializer1_8_R3, "a", "([B)V") &&
+                            isGetField(1, ChunkMap1_8_R3, "a", "[B")
+                        );
+                    }
+
+                    private void redirectToCompatWriteChunkData() {
+                        // FIXME: addInfo
+                        visits().pop();
+                        loadArg(0);
+                        swap();
+                        loadArg(0);
+                        getField(t(PacketDataSerializer1_8_R3), "nmsPlayer", t(EntityPlayer1_8_R3));
+                        swap();
+                        loadThis();
+                        getField(t(PacketPlayOutMapChunk1_8_R3), "c", t(ChunkMap1_8_R3));
+                        getField(t(ChunkMap1_8_R3), "b", INT_TYPE);
+                        loadThis();
+                        getField(t(PacketPlayOutMapChunk1_8_R3), "d", BOOLEAN_TYPE);
+                        push(true);
+                        invokeStatic(
+                            t(CompatBridge1_8_R3),
+                            new Method(
+                                "writeChunkData",
+                                VOID_TYPE,
+                                new Type[] {
+                                    t(PacketDataSerializer1_8_R3),
+                                    t(EntityPlayer1_8_R3),
+                                    BYTE_ARRAY_TYPE,
+                                    INT_TYPE,
+                                    BOOLEAN_TYPE,
+                                    BOOLEAN_TYPE,
+                                }
+                            )
+                        );
+                    }
+                };
+            }
+            return super.visitMethod(access, name, descriptor, signature, exceptions);
+        }
     }
 
-    private static byte[] transformPacketBlockChange(ClassLoader loader, String s, byte[] bytes) {
-        ClassRewriter crw = new ClassRewriter(loader, bytes);
-        crw.rewrite(
-            (api, cv) ->
-                new ClassVisitor(api, cv) {
+    private static class PacketChunkBulkTransformer extends AZClassVisitor {
+
+        public PacketChunkBulkTransformer(int api, ClassVisitor cv) {
+            super(api, cv);
+            expandFrames = true;
+        }
+
+        @Override
+        public MethodVisitor visitMethod(
+            int access,
+            String name,
+            String descriptor,
+            String signature,
+            String[] exceptions
+        ) {
+            if ("b".equals(name) && ("(L" + PacketDataSerializer1_8_R3 + ";)V").equals(descriptor)) {
+                // public void b(PacketDataSerializer buf) {
+                //   [...]
+                //  -[buf.writeBytes(this.c[i].a);]
+                //  +CompatBridgeXXX.writeChunkData(buf, buf.nmsPlayer, this.c[i].a, this.c[i].b, this.d, true);
+                //   [...]
+                // }
+                return new BufferedGeneratorAdapter(api, cv, access, name, descriptor, signature, exceptions) {
+                    private boolean inserted;
+
                     @Override
-                    public MethodVisitor visitMethod(
-                        int access,
+                    public void visit(Visit visit) {
+                        if (!inserted && isWriteChunkData()) {
+                            inserted = true;
+                            redirectToCompatWriteChunkData();
+                        }
+                    }
+
+                    private boolean isWriteChunkData() {
+                        return (
+                            isInvokeVirtual(
+                                0,
+                                PacketDataSerializer1_8_R3,
+                                "writeBytes",
+                                "([B)Lio/netty/buffer/ByteBuf;"
+                            ) &&
+                            isGetField(1, ChunkMap1_8_R3, "a", "[B")
+                        );
+                    }
+
+                    private void redirectToCompatWriteChunkData() {
+                        // FIXME: addInfo
+                        int arrayIndex = visits(VarInsn.class, v -> v.getOpcode() == Opcodes.ILOAD)
+                            .findFirst()
+                            .get()
+                            .getVarIndex();
+                        visits().pop();
+                        loadArg(0);
+                        swap();
+                        loadArg(0);
+                        getField(t(PacketDataSerializer1_8_R3), "nmsPlayer", t(EntityPlayer1_8_R3));
+                        swap();
+                        loadThis();
+                        getField(t(PacketPlayOutMapChunkBulk1_8_R3), "c", arrayType(t(ChunkMap1_8_R3)));
+                        loadLocal(arrayIndex);
+                        arrayLoad(t(ChunkMap1_8_R3));
+                        getField(t(ChunkMap1_8_R3), "b", INT_TYPE);
+                        loadThis();
+                        getField(t(PacketPlayOutMapChunkBulk1_8_R3), "d", BOOLEAN_TYPE);
+                        push(false);
+                        invokeStatic(
+                            t(CompatBridge1_8_R3),
+                            new Method(
+                                "writeChunkData",
+                                VOID_TYPE,
+                                new Type[] {
+                                    t(PacketDataSerializer1_8_R3),
+                                    t(EntityPlayer1_8_R3),
+                                    t(byte[].class),
+                                    INT_TYPE,
+                                    BOOLEAN_TYPE,
+                                    BOOLEAN_TYPE,
+                                }
+                            )
+                        );
+                    }
+                };
+            }
+            return super.visitMethod(access, name, descriptor, signature, exceptions);
+        }
+    }
+
+    private static class PacketBlockChangeTransformer extends AZClassVisitor {
+
+        public PacketBlockChangeTransformer(int api, ClassVisitor cv) {
+            super(api, cv);
+            expandFrames = true;
+        }
+
+        @Override
+        public MethodVisitor visitMethod(
+            int access,
+            String name,
+            String descriptor,
+            String signature,
+            String[] exceptions
+        ) {
+            if ("b".equals(name) && ("(L" + PacketDataSerializer1_8_R3 + ";)V").equals(descriptor)) {
+                return new AZGeneratorAdapter(api, cv, access, name, descriptor, signature, exceptions) {
+                    // public void b(PacketDataSerializer buf) {
+                    //   [...]
+                    //  -[buf.b(Block.d.b(...));]
+                    //  +buf.b(CompactBridgeXXX.rewriteBlockState(Block.d.b(...), this.nmsPlayer));
+                    //   [...]
+                    // }
+                    @Override
+                    public void visitMethodInsn(
+                        int opcode,
+                        String owner,
                         String name,
                         String descriptor,
-                        String signature,
-                        String[] exceptions
+                        boolean isInterface
                     ) {
-                        if (
-                            "b".equals(name) &&
-                            "(Lnet/minecraft/server/v1_8_R3/PacketDataSerializer;)V".equals(descriptor)
-                        ) {
-                            return new GeneratorAdapter(
-                                api,
-                                super.visitMethod(access, name, descriptor, signature, exceptions),
-                                access,
-                                name,
-                                descriptor
-                            ) {
-                                // public void b(PacketDataSerializer buf) {
-                                //   [...]
-                                //  -[buf.b(Block.d.b(...));]
-                                //  +buf.b(CompactBridgeXXX.rewriteBlockState(Block.d.b(...), this.nmsPlayer));
-                                //   [...]
-                                // }
-                                @Override
-                                public void visitMethodInsn(
-                                    int opcode,
-                                    String owner,
-                                    String name,
-                                    String descriptor,
-                                    boolean isInterface
-                                ) {
-                                    super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
-                                    if (
-                                        opcode == Opcodes.INVOKEVIRTUAL &&
-                                        "b".equals(name) &&
-                                        "net/minecraft/server/v1_8_R3/RegistryID".equals(owner)
-                                    ) {
-                                        loadArg(0);
-                                        getField(
-                                            Type.getObjectType("net/minecraft/server/v1_8_R3/PacketDataSerializer"),
-                                            "nmsPlayer",
-                                            Type.getObjectType("net/minecraft/server/v1_8_R3/EntityPlayer")
-                                        );
-                                        invokeStatic(
-                                            Type.getObjectType(COMPAT_BRIDGE1_8_R3),
-                                            new Method(
-                                                "rewriteBlockState",
-                                                Type.INT_TYPE,
-                                                new Type[] {
-                                                    Type.INT_TYPE,
-                                                    Type.getObjectType("net/minecraft/server/v1_8_R3/EntityPlayer"),
-                                                }
-                                            )
-                                        );
-                                    }
-                                }
-                            };
+                        super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
+                        if (opcode == Opcodes.INVOKEVIRTUAL && "b".equals(name) && RegistryID1_8_R3.equals(owner)) {
+                            // FIXME: addInfo
+                            loadArg(0);
+                            getField(t(PacketDataSerializer1_8_R3), "nmsPlayer", t(EntityPlayer1_8_R3));
+                            invokeStatic(
+                                t(CompatBridge1_8_R3),
+                                new Method(
+                                    "rewriteBlockState",
+                                    INT_TYPE,
+                                    new Type[] { INT_TYPE, t(EntityPlayer1_8_R3) }
+                                )
+                            );
                         }
-                        return super.visitMethod(access, name, descriptor, signature, exceptions);
                     }
-                },
-            ClassRewriter.DEFAULT_PARSING_OPTIONS | ClassReader.EXPAND_FRAMES,
-            ClassRewriter.DEFAULT_WRITER_FLAGS
-        );
-        return crw.getBytes();
+                };
+            }
+            return super.visitMethod(access, name, descriptor, signature, exceptions);
+        }
     }
 }

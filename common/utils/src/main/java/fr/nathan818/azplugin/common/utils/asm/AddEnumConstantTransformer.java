@@ -3,7 +3,7 @@ package fr.nathan818.azplugin.common.utils.asm;
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.CONSTRUCTOR_NAME;
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.STATIC_INITIALIZER_NAME;
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.addField;
-import static fr.nathan818.azplugin.common.utils.asm.AgentClassWriter.addInfo;
+import static fr.nathan818.azplugin.common.utils.asm.AZClassWriter.addInfo;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -15,9 +15,8 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.commons.GeneratorAdapter;
 
-public final class AddEnumConstantTransformer extends ClassVisitor {
+public final class AddEnumConstantTransformer extends AZClassVisitor {
 
     private final Collection<EnumConstant> enumConstants;
 
@@ -108,7 +107,7 @@ public final class AddEnumConstantTransformer extends ClassVisitor {
         }
 
         private void insertNewEnumValues() {
-            GeneratorAdapter mg = ASMUtil.createGenericGeneratorAdapter(api, this, true);
+            AZGeneratorAdapter mg = ASMUtil.createGenericGeneratorAdapter(api, this, true);
 
             // Define new enum fields
             int ordinal = enumFieldsCount;
@@ -172,6 +171,6 @@ public final class AddEnumConstantTransformer extends ClassVisitor {
 
     @FunctionalInterface
     public interface InitializerGenerator {
-        void generate(GeneratorAdapter mg, Type type, String name, int ordinal);
+        void generate(AZGeneratorAdapter mg, Type type, String name, int ordinal);
     }
 }

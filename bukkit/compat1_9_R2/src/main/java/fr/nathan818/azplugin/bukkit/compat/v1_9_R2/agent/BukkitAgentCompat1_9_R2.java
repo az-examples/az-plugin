@@ -7,14 +7,32 @@ import static fr.nathan818.azplugin.bukkit.compat.agent.EntityScaleTransformers.
 import static fr.nathan818.azplugin.bukkit.compat.agent.NMSMaterialTransformers.registerNMSMaterialTransformer;
 import static fr.nathan818.azplugin.bukkit.compat.material.NMSMaterialDefinitions.ARMOR_MATERIALS;
 import static fr.nathan818.azplugin.bukkit.compat.material.NMSMaterialDefinitions.TOOL_MATERIALS;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.CompatBridge1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.CraftEntity1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.CraftItemStack1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.Entity1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.EntityPlayer1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.EnumArmorMaterial1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.EnumToolMaterial1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.ItemAxe1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.ItemStack1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.PacketDataSerializer1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.PacketDecoder1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.PacketEncoder1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.PacketPlayInChat1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.SoundEffect1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.SoundEffects1_9_R2;
+import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.t;
+import static org.objectweb.asm.Type.FLOAT_TYPE;
+import static org.objectweb.asm.Type.INT_TYPE;
 
 import fr.nathan818.azplugin.bukkit.compat.agent.PacketRewriteTransformers;
 import fr.nathan818.azplugin.bukkit.compat.material.NMSArmorMaterialDefinition;
 import fr.nathan818.azplugin.bukkit.compat.material.NMSToolMaterialDefinition;
 import fr.nathan818.azplugin.common.utils.agent.Agent;
 import fr.nathan818.azplugin.common.utils.asm.ASMUtil;
+import fr.nathan818.azplugin.common.utils.asm.AZClassVisitor;
 import fr.nathan818.azplugin.common.utils.asm.AddEnumConstantTransformer;
-import fr.nathan818.azplugin.common.utils.asm.ClassRewriter;
 import java.util.Locale;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -23,57 +41,40 @@ import org.objectweb.asm.Type;
 
 public class BukkitAgentCompat1_9_R2 {
 
-    public static final String COMPAT_BRIDGE1_9_R2 =
-        "fr/nathan818/azplugin/bukkit/compat/v1_9_R2/agent/CompatBridge1_9_R2";
-
     public static void register(Agent agent) {
-        registerGetItemStackHandle(
-            agent,
-            COMPAT_BRIDGE1_9_R2,
-            "org/bukkit/craftbukkit/v1_9_R2/inventory/CraftItemStack"
-        );
-        registerCraftField(
-            agent,
-            COMPAT_BRIDGE1_9_R2,
-            "getAZEntity",
-            "setAZEntity",
-            "org/bukkit/craftbukkit/v1_9_R2/entity/CraftEntity",
-            "azEntity"
-        );
-        registerChatPacketTransformer(agent, "net/minecraft/server/v1_9_R2/PacketPlayInChat", 100, 3, 3);
+        registerGetItemStackHandle(agent, CompatBridge1_9_R2, CraftItemStack1_9_R2);
+        registerCraftField(agent, CompatBridge1_9_R2, "getAZEntity", "setAZEntity", CraftEntity1_9_R2, "azEntity");
+        registerChatPacketTransformer(agent, PacketPlayInChat1_9_R2, 100, 3, 3);
         registerNMSMaterialTransformer(
             agent,
-            "net/minecraft/server/v1_9_R2/Item$EnumToolMaterial",
+            EnumToolMaterial1_9_R2,
             BukkitAgentCompat1_9_R2::initEnumToolMaterial,
             TOOL_MATERIALS,
             false
         );
         registerNMSMaterialTransformer(
             agent,
-            "net/minecraft/server/v1_9_R2/ItemArmor$EnumArmorMaterial",
+            EnumArmorMaterial1_9_R2,
             BukkitAgentCompat1_9_R2::initEnumArmorMaterial,
             ARMOR_MATERIALS,
             false
         );
-        agent.addTransformer(
-            "net/minecraft/server/v1_9_R2/ItemAxe",
-            BukkitAgentCompat1_9_R2::removeFinalFromStaticFields
-        );
+        agent.addTransformer(ItemAxe1_9_R2, RemoveFinalFromStaticFieldsTransformer::new);
         EntityTrackEventTransformers1_9_R2.register(agent);
         registerEntityScaleTransformer(agent, opts -> {
-            opts.compatBridgeClass(COMPAT_BRIDGE1_9_R2);
-            opts.nmsEntityClass("net/minecraft/server/v1_9_R2/Entity");
-            opts.craftEntityClass("org/bukkit/craftbukkit/v1_9_R2/entity/CraftEntity");
+            opts.compatBridgeClass(CompatBridge1_9_R2);
+            opts.nmsEntityClass(Entity1_9_R2);
+            opts.craftEntityClass(CraftEntity1_9_R2);
         });
         PacketRewriteTransformers.register(agent, opts -> {
-            opts.compatBridgeClass(COMPAT_BRIDGE1_9_R2);
-            opts.nmsPacketDataSerializerClass("net/minecraft/server/v1_9_R2/PacketDataSerializer");
+            opts.compatBridgeClass(CompatBridge1_9_R2);
+            opts.nmsPacketDataSerializerClass(PacketDataSerializer1_9_R2);
             opts.writeItemStackMethod("a");
             opts.readItemStackMethod("k");
-            opts.nmsPacketEncoderClass("net/minecraft/server/v1_9_R2/PacketEncoder");
-            opts.nmsPacketDecoderClass("net/minecraft/server/v1_9_R2/PacketDecoder");
-            opts.nmsEntityPlayerClass("net/minecraft/server/v1_9_R2/EntityPlayer");
-            opts.nmsItemStackClass("net/minecraft/server/v1_9_R2/ItemStack");
+            opts.nmsPacketEncoderClass(PacketEncoder1_9_R2);
+            opts.nmsPacketDecoderClass(PacketDecoder1_9_R2);
+            opts.nmsEntityPlayerClass(EntityPlayer1_9_R2);
+            opts.nmsItemStackClass(ItemStack1_9_R2);
         });
         ChunkRewriteTransformers1_9_R2.register(agent);
     }
@@ -94,13 +95,13 @@ public class BukkitAgentCompat1_9_R2 {
             mg.invokeConstructor(
                 type,
                 ASMUtil.createConstructor(
-                    Type.getType(String.class), // enum name
-                    Type.INT_TYPE, // enum ordinal
-                    Type.INT_TYPE, // harvestLevel
-                    Type.INT_TYPE, // durability
-                    Type.FLOAT_TYPE, // digSpeed
-                    Type.FLOAT_TYPE, // damages
-                    Type.INT_TYPE // enchantability
+                    t(String.class), // enum name
+                    INT_TYPE, // enum ordinal
+                    INT_TYPE, // harvestLevel
+                    INT_TYPE, // durability
+                    FLOAT_TYPE, // digSpeed
+                    FLOAT_TYPE, // damages
+                    INT_TYPE // enchantability
                 )
             );
         };
@@ -110,8 +111,8 @@ public class BukkitAgentCompat1_9_R2 {
         NMSArmorMaterialDefinition material
     ) {
         return (mg, type, name, ordinal) -> {
-            Type soundEffectsType = Type.getObjectType("net/minecraft/server/v1_9_R2/SoundEffects");
-            Type soundEffectType = Type.getObjectType("net/minecraft/server/v1_9_R2/SoundEffect");
+            Type soundEffectsType = t(SoundEffects1_9_R2);
+            Type soundEffectType = t(SoundEffect1_9_R2);
 
             mg.newInstance(type);
             mg.dup();
@@ -126,38 +127,31 @@ public class BukkitAgentCompat1_9_R2 {
             mg.invokeConstructor(
                 type,
                 ASMUtil.createConstructor(
-                    Type.getType(String.class), // enum name
-                    Type.INT_TYPE, // enum ordinal
-                    Type.getType(String.class), // name
-                    Type.INT_TYPE, // durabilityFactor
-                    Type.getType(int[].class), // modifiers
-                    Type.INT_TYPE, // enchantability
+                    t(String.class), // enum name
+                    INT_TYPE, // enum ordinal
+                    t(String.class), // name
+                    INT_TYPE, // durabilityFactor
+                    t(int[].class), // modifiers
+                    INT_TYPE, // enchantability
                     soundEffectType, // equipSound
-                    Type.FLOAT_TYPE // toughness
+                    FLOAT_TYPE // toughness
                 )
             );
         };
     }
 
-    private static byte[] removeFinalFromStaticFields(ClassLoader loader, String className, byte[] bytes) {
-        ClassRewriter crw = new ClassRewriter(loader, bytes);
-        crw.rewrite((api, cv) ->
-            new ClassVisitor(api, cv) {
-                @Override
-                public FieldVisitor visitField(
-                    int access,
-                    String name,
-                    String descriptor,
-                    String signature,
-                    Object value
-                ) {
-                    if ((access & Opcodes.ACC_STATIC) != 0 && (access & Opcodes.ACC_FINAL) != 0) {
-                        access &= ~Opcodes.ACC_FINAL;
-                    }
-                    return super.visitField(access, name, descriptor, signature, value);
-                }
+    private static class RemoveFinalFromStaticFieldsTransformer extends AZClassVisitor {
+
+        public RemoveFinalFromStaticFieldsTransformer(int api, ClassVisitor cv) {
+            super(api, cv);
+        }
+
+        @Override
+        public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
+            if ((access & Opcodes.ACC_STATIC) != 0 && (access & Opcodes.ACC_FINAL) != 0) {
+                access &= ~Opcodes.ACC_FINAL;
             }
-        );
-        return crw.getBytes();
+            return super.visitField(access, name, descriptor, signature, value);
+        }
     }
 }
