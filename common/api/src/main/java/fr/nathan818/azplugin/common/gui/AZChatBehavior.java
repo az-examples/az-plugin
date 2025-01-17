@@ -25,11 +25,15 @@ public final class AZChatBehavior {
     private final @NonNull UUID id;
     private final @Nullable PLSPRegex pattern;
     private final @Nullable NotchianChatComponent message;
-    private final @Nullable String tagColor; // TODO: Replace this with an AZ chat API color object
+    private final @Nullable @Getter(AccessLevel.NONE) String tagColor; // TODO(low): Use a color object?
     private final short priority;
 
     public boolean isSet() {
         return pattern != null;
+    }
+
+    public @Nullable String getSerializedTagColor() {
+        return tagColor;
     }
 
     public static AZChatBehavior remove(@NotNull UUID id) {

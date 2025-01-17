@@ -332,7 +332,7 @@ public interface AZClient {
                         behavior.getId(),
                         behavior.getPattern(),
                         behavior.getMessage(),
-                        behavior.getTagColor(),
+                        behavior.getSerializedTagColor(),
                         behavior.getPriority()
                     )
                 );

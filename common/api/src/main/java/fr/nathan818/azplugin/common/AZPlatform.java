@@ -30,7 +30,6 @@ public interface AZPlatform<Player, Client extends AZClient> {
     }
 
     default NotchianChatComponent readNotchianChatComponent(@NotNull AZPacketBuffer buf) {
-        // TODO: Use AZ chat API component
         return SimpleNotchianChatComponent.read(buf);
     }
 
@@ -40,7 +39,6 @@ public interface AZPlatform<Player, Client extends AZClient> {
 
     @Nullable
     default NotchianItemStack readNotchianItemStack(@NotNull AZPacketBuffer buf) {
-        // TODO: Use AZ stack API
         return SimpleNotchianItemStack.read(buf);
     }
 
@@ -50,7 +48,6 @@ public interface AZPlatform<Player, Client extends AZClient> {
 
     @Nullable
     default NotchianNbtTagCompound readNotchianNbtTagCompound(@NotNull AZPacketBuffer buf) {
-        // TODO: Use AZ NBT API
         throw new UnsupportedOperationException("Platform does not support reading NotchianNbtTagCompound");
     }
 

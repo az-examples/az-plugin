@@ -93,7 +93,7 @@ public final class AZCosmeticEquipment {
         public boolean isAny() {
             return patterns != null && patterns.isEmpty();
         }
-        // TODO: Add methods to check if an item matches the pattern, etc
+        // TODO(low): Add utility methods to check if an item matches the pattern, etc
     }
 
     public interface MatchPatternBuilder {
