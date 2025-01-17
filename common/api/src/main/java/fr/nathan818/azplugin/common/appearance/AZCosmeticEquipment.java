@@ -14,10 +14,11 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import pactify.client.api.mcprotocol.model.NotchianChatComponent;
 import pactify.client.api.mcprotocol.model.NotchianItemStack;
-import pactify.client.api.plprotocol.model.cosmetic.PactifyCosmeticEquipment;
+import pactify.client.api.plprotocol.model.cosmetic.PactifyCosmeticEquipment.ItemPattern;
 
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(builderClassName = "Builder", toBuilder = true)
@@ -84,7 +85,7 @@ public final class AZCosmeticEquipment {
             return new MatchPatternBuilderImpl();
         }
 
-        private final @Nullable List<PactifyCosmeticEquipment.ItemPattern> patterns;
+        private final @Nullable List<ItemPattern> patterns;
 
         public boolean isNone() {
             return patterns == null;
@@ -93,7 +94,108 @@ public final class AZCosmeticEquipment {
         public boolean isAny() {
             return patterns != null && patterns.isEmpty();
         }
-        // TODO(low): Add utility methods to check if an item matches the pattern, etc
+
+        public boolean isMatching(@Nullable NotchianItemStackLike item) {
+            if (patterns == null) {
+                return true;
+            }
+            NotchianItemStack itemStack = NotchianItemStackLike.convert(item);
+            for (ItemPattern pattern : patterns) {
+                if (isMatching(itemStack, pattern)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private boolean isMatching(@Nullable NotchianItemStack itemStack, @NotNull ItemPattern pattern) {
+            if (pattern.getId() != 0) {
+                return (
+                    !isNull(itemStack) &&
+                    pattern.getId() == itemStack.getItemId() &&
+                    (pattern.getData() == -1 || pattern.getData() == itemStack.getDamage())
+                );
+            } else {
+                return (pattern.getData() & getCosmeticEquipmentType(itemStack)) != 0;
+            }
+        }
+
+        private int getCosmeticEquipmentType(@Nullable NotchianItemStack itemStack) {
+            if (isNull(itemStack)) {
+                return ItemPattern.ID0_EMPTY;
+            }
+            switch (itemStack.getItemId()) {
+                case 256: // iron_shovel
+                case 269: // wooden_shovel
+                case 273: // stone_shovel
+                case 277: // diamond_shovel
+                case 284: // golden_shovel
+                case 773: // emerald_shovel
+                    return ItemPattern.ID0_NOT_EMPTY | ItemPattern.ID0_SHOVEL;
+                case 257: // iron_pickaxe
+                case 270: // wooden_pickaxe
+                case 274: // stone_pickaxe
+                case 278: // diamond_pickaxe
+                case 285: // golden_pickaxe
+                case 774: // emerald_pickaxe
+                    return ItemPattern.ID0_NOT_EMPTY | ItemPattern.ID0_PICKAXE;
+                case 258: // iron_axe
+                case 271: // wooden_axe
+                case 275: // stone_axe
+                case 279: // diamond_axe
+                case 286: // golden_axe
+                case 775: // emerald_axe
+                    return ItemPattern.ID0_NOT_EMPTY | ItemPattern.ID0_AXE;
+                case 267: // iron_sword
+                case 268: // wooden_sword
+                case 272: // stone_sword
+                case 276: // diamond_sword
+                case 283: // golden_sword
+                case 772: // emerald_sword
+                    return ItemPattern.ID0_NOT_EMPTY | ItemPattern.ID0_SWORD;
+                case 290: // wooden_hoe
+                case 291: // stone_hoe
+                case 292: // iron_hoe
+                case 293: // diamond_hoe
+                case 294: // golden_hoe
+                case 776: // emerald_hoe
+                    return ItemPattern.ID0_NOT_EMPTY | ItemPattern.ID0_HOE;
+                case 298: // leather_helmet
+                case 302: // chainmail_helmet
+                case 306: // iron_helmet
+                case 310: // diamond_helmet
+                case 314: // golden_helmet
+                case 768: // emerald_helmet
+                    return ItemPattern.ID0_NOT_EMPTY | ItemPattern.ID0_HELMET;
+                case 299: // leather_chestplate
+                case 303: // chainmail_chestplate
+                case 307: // iron_chestplate
+                case 311: // diamond_chestplate
+                case 315: // golden_chestplate
+                case 769: // emerald_chestplate
+                    return ItemPattern.ID0_NOT_EMPTY | ItemPattern.ID0_CHESTPLATE;
+                case 300: // leather_leggings
+                case 304: // chainmail_leggings
+                case 308: // iron_leggings
+                case 312: // diamond_leggings
+                case 316: // golden_leggings
+                case 770: // emerald_leggings
+                    return ItemPattern.ID0_NOT_EMPTY | ItemPattern.ID0_LEGGINGS;
+                case 301: // leather_boots
+                case 305: // chainmail_boots
+                case 309: // iron_boots
+                case 313: // diamond_boots
+                case 317: // golden_boots
+                case 771: // emerald_boots
+                    return ItemPattern.ID0_NOT_EMPTY | ItemPattern.ID0_BOOTS;
+                default:
+                    return ItemPattern.ID0_NOT_EMPTY;
+            }
+        }
+
+        private boolean isNull(@Nullable NotchianItemStack itemStack) {
+            return itemStack == null || itemStack.getItemId() <= 0;
+        }
     }
 
     public interface MatchPatternBuilder {
