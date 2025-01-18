@@ -42,9 +42,8 @@ public class EntityTrackEventTransformers1_9_R2 {
             String signature,
             String[] exceptions
         ) {
-            MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
             if ("updatePlayer".equals(name)) {
-                return new AZGeneratorAdapter(api, mv, access, name, descriptor) {
+                return new AZGeneratorAdapter(api, cv, access, name, descriptor, signature, exceptions) {
                     @Override
                     public void visitMethodInsn(
                         int opcode,
@@ -66,7 +65,7 @@ public class EntityTrackEventTransformers1_9_R2 {
                     }
                 };
             }
-            return mv;
+            return super.visitMethod(access, name, descriptor, signature, exceptions);
         }
 
         @Override

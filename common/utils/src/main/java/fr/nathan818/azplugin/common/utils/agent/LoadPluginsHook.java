@@ -1,9 +1,13 @@
 package fr.nathan818.azplugin.common.utils.agent;
 
 import static fr.nathan818.azplugin.common.AZPlatform.log;
+import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.NO_ARGS;
+import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.t;
+import static org.objectweb.asm.Type.VOID_TYPE;
 
 import fr.nathan818.azplugin.common.utils.JvmMagic;
 import fr.nathan818.azplugin.common.utils.asm.AZClassVisitor;
+import fr.nathan818.azplugin.common.utils.asm.AZGeneratorAdapter;
 import fr.nathan818.azplugin.common.utils.asm.CtClassLoader;
 import java.net.URL;
 import java.util.function.Predicate;
@@ -12,8 +16,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.Method;
 
 public class LoadPluginsHook {
 
@@ -103,6 +106,7 @@ public class LoadPluginsHook {
             super(api, cv);
             this.targetMethod = targetMethod;
             this.targetDescriptor = targetDescriptor;
+            expandFrames = true;
         }
 
         @Override
@@ -113,24 +117,17 @@ public class LoadPluginsHook {
             String signature,
             String[] exceptions
         ) {
-            MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
             if (targetMethod.equals(name) && targetDescriptor.equals(descriptor)) {
-                return new MethodVisitor(api, mv) {
+                return new AZGeneratorAdapter(api, cv, access, name, descriptor, signature, exceptions) {
                     @Override
                     public void visitCode() {
-                        hooked = true;
-                        super.visitMethodInsn(
-                            Opcodes.INVOKESTATIC,
-                            Type.getInternalName(LoadPluginsHook.class),
-                            "onLoadPlugins",
-                            "()V",
-                            false
-                        );
                         super.visitCode();
+                        invokeStatic(t(LoadPluginsHook.class), new Method("onLoadPlugins", VOID_TYPE, NO_ARGS));
+                        hooked = true;
                     }
                 };
             }
-            return mv;
+            return super.visitMethod(access, name, descriptor, signature, exceptions);
         }
     }
 }

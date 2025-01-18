@@ -4,6 +4,7 @@ import static fr.nathan818.azplugin.common.utils.asm.AZClassWriter.addInfo;
 
 import fr.nathan818.azplugin.common.utils.agent.Agent;
 import fr.nathan818.azplugin.common.utils.asm.AZClassVisitor;
+import fr.nathan818.azplugin.common.utils.asm.AZGeneratorAdapter;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -44,6 +45,7 @@ public class ChatPacketTransformers {
             this.defaultLimit = defaultLimit;
             this.minRefCount = minRefCount;
             this.maxRefCount = maxRefCount;
+            expandFrames = true;
         }
 
         @Override
@@ -54,7 +56,7 @@ public class ChatPacketTransformers {
             String signature,
             String[] exceptions
         ) {
-            return new MethodVisitor(api, super.visitMethod(access, name, descriptor, signature, exceptions)) {
+            return new AZGeneratorAdapter(api, cv, access, name, descriptor, signature, exceptions) {
                 @Override
                 public void visitIntInsn(int opcode, int operand) {
                     if ((opcode == Opcodes.BIPUSH || opcode == Opcodes.SIPUSH) && operand == defaultLimit) {

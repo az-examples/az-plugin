@@ -297,9 +297,14 @@ public class EntityScaleTransformers {
             if ("getHeadHeight".equals(name) && "()F".equals(descriptor)) {
                 // Rename getHeadHeight to getUnscaledHeadHeight
                 addInfo(cv, getClassName(), "Remapped getHeadHeight to getUnscaledHeadHeight");
-                return new MethodVisitor(
+                return new AZGeneratorAdapter(
                     api,
-                    super.visitMethod(access, "getUnscaledHeadHeight", descriptor, signature, exceptions)
+                    cv,
+                    access,
+                    "getUnscaledHeadHeight",
+                    descriptor,
+                    signature,
+                    exceptions
                 ) {
                     @Override
                     public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {

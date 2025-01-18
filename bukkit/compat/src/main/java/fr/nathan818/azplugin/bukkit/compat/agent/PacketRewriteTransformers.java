@@ -94,6 +94,7 @@ public class PacketRewriteTransformers {
                 return new AZGeneratorAdapter(api, cv, access, name, descriptor, signature, exceptions) {
                     @Override
                     public void visitCode() {
+                        super.visitCode();
                         loadThis();
                         getField(t(getClassName()), "nmsPlayer", t(opts.getNmsEntityPlayerClass()));
                         loadArg(0);
@@ -109,7 +110,6 @@ public class PacketRewriteTransformers {
                             )
                         );
                         storeArg(0);
-                        super.visitCode();
                     }
                 };
             }

@@ -49,16 +49,15 @@ public class EntityTrackEventTransformers1_8_R3 {
             String signature,
             String[] exceptions
         ) {
-            MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
             if ("updatePlayer".equals(name)) {
-                return new AZGeneratorAdapter(api, mv, access, name, descriptor) {
+                return new AZGeneratorAdapter(api, cv, access, name, descriptor, signature, exceptions) {
                     @Override
                     public void visitCode() {
+                        super.visitCode();
                         // boolean flag = false;
                         flagLocalIndex = newLocal(BOOLEAN_TYPE);
                         push(false);
                         storeLocal(flagLocalIndex);
-                        super.visitCode();
                     }
 
                     @Override
@@ -107,7 +106,7 @@ public class EntityTrackEventTransformers1_8_R3 {
                     }
                 };
             }
-            return mv;
+            return super.visitMethod(access, name, descriptor, signature, exceptions);
         }
 
         @Override

@@ -91,6 +91,7 @@ public class PlayerWindowIdTransformers {
                 return new AZGeneratorAdapter(api, cv, access, name, descriptor, signature, exceptions) {
                     @Override
                     public void visitCode() {
+                        super.visitCode();
                         Label elseLabel = newLabel();
                         loadThis();
                         getField(t(opts.getNmsEntityPlayerClass()), "azWindowIdOverride", INT_TYPE);
@@ -107,7 +108,6 @@ public class PlayerWindowIdTransformers {
                         returnValue();
                         visitLabel(elseLabel);
                         addInfo(cv, getClassName(), "Overridden nextContainerCounter method");
-                        super.visitCode();
                     }
                 };
             }

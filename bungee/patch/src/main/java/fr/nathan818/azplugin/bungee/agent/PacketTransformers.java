@@ -5,6 +5,7 @@ import static fr.nathan818.azplugin.common.AZPlatform.log;
 import fr.nathan818.azplugin.common.utils.agent.Agent;
 import fr.nathan818.azplugin.common.utils.agent.ClassTransformer;
 import fr.nathan818.azplugin.common.utils.asm.AZClassVisitor;
+import fr.nathan818.azplugin.common.utils.asm.AZGeneratorAdapter;
 import java.util.logging.Level;
 import lombok.Getter;
 import org.objectweb.asm.ClassVisitor;
@@ -38,6 +39,7 @@ class PacketTransformers {
 
         public ChatPacketTransformer(int api, ClassVisitor mv) {
             super(api, mv);
+            expandFrames = true;
         }
 
         @Override
@@ -49,7 +51,7 @@ class PacketTransformers {
             String[] exceptions
         ) {
             if ("read".equals(name) || "write".equals(name)) {
-                return new MethodVisitor(api, super.visitMethod(access, name, descriptor, signature, exceptions)) {
+                return new AZGeneratorAdapter(api, cv, access, name, descriptor, signature, exceptions) {
                     @Override
                     public void visitIntInsn(int opcode, int operand) {
                         if (
