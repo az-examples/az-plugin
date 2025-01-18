@@ -1,6 +1,8 @@
 package fr.nathan818.azplugin.bukkit.compat.agent;
 
+import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.NO_ARGS;
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.t;
+import static org.objectweb.asm.Type.BOOLEAN_TYPE;
 import static org.objectweb.asm.Type.VOID_TYPE;
 
 import fr.nathan818.azplugin.common.utils.agent.Agent;
@@ -15,6 +17,12 @@ public class BukkitAgentCompat {
         "callEntityTrackBeginEvent",
         VOID_TYPE,
         new Type[] { t("org/bukkit/entity/Entity"), t("org/bukkit/entity/Player") }
+    );
+    public static final Method IS_SWORD_BLOCKING_ENABLED = new Method("isSwordBlockingEnabled", BOOLEAN_TYPE, NO_ARGS);
+    public static final Method IS_ATTACK_COOLDOWN_DISABLED = new Method(
+        "isAttackCooldownDisabled",
+        BOOLEAN_TYPE,
+        new Type[] { t("org/bukkit/entity/Entity") }
     );
 
     public static void register(Agent agent) {

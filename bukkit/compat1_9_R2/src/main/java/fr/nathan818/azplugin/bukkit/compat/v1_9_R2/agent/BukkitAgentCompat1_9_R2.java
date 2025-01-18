@@ -82,6 +82,8 @@ public class BukkitAgentCompat1_9_R2 {
             opts.nmsItemStackClass(ItemStack1_9_R2);
         });
         ChunkRewriteTransformers1_9_R2.register(agent);
+        SwordBlocking1_9_R2.register(agent);
+        NoCooldown1_9_R2.register(agent);
     }
 
     private static AddEnumConstantTransformer.InitializerGenerator initEnumToolMaterial(

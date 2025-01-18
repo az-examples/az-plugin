@@ -1,5 +1,6 @@
 package fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent;
 
+import com.google.common.base.Function;
 import net.minecraft.server.v1_9_R2.EntityPlayer;
 import net.minecraft.server.v1_9_R2.ItemStack;
 import net.minecraft.server.v1_9_R2.PacketDataSerializer;
@@ -33,6 +34,21 @@ public class CompatBridge1_9_R2 {
 
     public static void setNextWindowId(@NotNull EntityPlayer handle, int windowId) {
         throw new UnsupportedOperationException(); // implemented by BukkitAgentCompat1_9_R2
+    }
+
+    public static Function<Double, Double> wrapDamageBlocking(
+        @NotNull Function<Double, Double> blocking,
+        boolean isSwordBlocking
+    ) {
+        return f -> {
+            if (f > 0.0D && isSwordBlocking) {
+                double newF = (1.0D + f) * 0.5D;
+                if (newF < f) {
+                    return -(f - newF);
+                }
+            }
+            return blocking.apply(f);
+        };
     }
 
     public static void writeChunkData(

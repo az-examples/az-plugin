@@ -155,7 +155,6 @@ public interface AZClient {
     }
 
     default boolean setLargeHitbox(boolean value) {
-        // TODO: Support this server-side
         return setConfFlag("large_hitbox", value);
     }
 
@@ -237,7 +236,6 @@ public interface AZClient {
     }
 
     default boolean setSwordBlocking(boolean value) {
-        // TODO: Support this server-side
         return setConfFlag("sword_blocking", value);
     }
 

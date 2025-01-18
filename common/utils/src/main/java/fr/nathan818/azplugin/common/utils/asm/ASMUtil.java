@@ -4,6 +4,7 @@ import lombok.experimental.UtilityClass;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -138,5 +139,15 @@ public class ASMUtil {
         mg.push(value);
         mg.returnValue();
         mg.endMethod();
+    }
+
+    public static void doVisit(MethodVisitor mv) {
+        AnnotationVisitor av = mv.visitAnnotationDefault();
+        if (av != null) {
+            av.visitEnd();
+        }
+        mv.visitCode();
+        mv.visitMaxs(0, 0);
+        mv.visitEnd();
     }
 }
