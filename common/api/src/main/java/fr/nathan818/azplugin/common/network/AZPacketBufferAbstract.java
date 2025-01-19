@@ -21,7 +21,7 @@ public abstract class AZPacketBufferAbstract
 
     @Override
     public int getPactifyClientVersion() {
-        return client != null ? client.getAZProtocolVersion() : getPactifyServerVersion();
+        return client == null ? getPactifyServerVersion() : client.getAZProtocolVersion();
     }
 
     @Override

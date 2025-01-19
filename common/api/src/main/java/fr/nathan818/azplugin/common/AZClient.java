@@ -409,7 +409,7 @@ public interface AZClient {
     }
 
     default boolean closeLoadScreen(@Nullable UUID id) {
-        String params = (id != null) ? "id=" + id : "";
+        String params = (id == null) ? "" : "id=" + id;
         return sendPacket(new PLSPPacketUiAction("CLOSE_LOAD", params));
     }
 }

@@ -127,7 +127,7 @@ public class BlockColoredPortalHandler extends BlockHandler {
         int itemData,
         Entity placer
     ) {
-        BlockFace direction = (placer != null) ? compat().getEntityDirection(placer) : BlockFace.NORTH;
+        BlockFace direction = (placer == null) ? BlockFace.NORTH : compat().getEntityDirection(placer);
         Axis axis = (direction != null && direction.getModX() != 0) ? Axis.Z : Axis.X;
         DyeColor color = DyeColor.byItemIndex(itemData);
         return getState(color, axis);

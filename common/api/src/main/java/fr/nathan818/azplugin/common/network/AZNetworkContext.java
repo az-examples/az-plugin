@@ -31,6 +31,6 @@ public interface AZNetworkContext {
 
     default int getAZProtocolVersion(int fallback) {
         AZClient viewer = getViewer();
-        return viewer != null ? viewer.getAZProtocolVersion() : fallback;
+        return viewer == null ? fallback : viewer.getAZProtocolVersion();
     }
 }

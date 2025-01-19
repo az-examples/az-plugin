@@ -105,7 +105,7 @@ public class AZEntityDimensions {
             return null;
         }
         Entry entry = dimensions.get(state);
-        return entry != null ? entry : dimensions.get("default");
+        return entry == null ? dimensions.get("default") : entry;
     }
 
     public static @Nullable Entry getDefaultDimensions(@Nullable String entityType) {

@@ -72,8 +72,8 @@ public abstract class AZClientAbstract implements AZClient {
             (v == null)
                 ? new PLSPPacketWorldEnv("", "default")
                 : new PLSPPacketWorldEnv(
-                    v.getName() != null ? v.getName() : "",
-                    v.getType() != null ? v.getType().name() : "default"
+                    v.getName() == null ? "" : v.getName(),
+                    v.getType() == null ? "default" : v.getType().name()
                 )
         )
         .listener(this::onWorldEnvChanged)

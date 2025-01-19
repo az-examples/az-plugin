@@ -252,7 +252,7 @@ public class BukkitCompat1_8_R3 implements BukkitCompat {
     @Override
     public @Nullable NotchianNbtTagCompound readNotchianNbtTagCompound(@NotNull AZPacketBuffer buf) {
         NBTTagCompound nmsTag = readFromNMSPacketBuffer(buf, PacketDataSerializer::h);
-        return nmsTag != null ? new NotchianNbtTagCompound1_8_R3(nmsTag) : null;
+        return nmsTag == null ? null : new NotchianNbtTagCompound1_8_R3(nmsTag);
     }
 
     @Override

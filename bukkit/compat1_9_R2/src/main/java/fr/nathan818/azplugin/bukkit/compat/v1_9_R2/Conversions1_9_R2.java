@@ -39,31 +39,31 @@ public class Conversions1_9_R2 {
 
     @Nullable
     public static org.bukkit.World getWorld(@Nullable World world) {
-        return world != null ? world.getWorld() : null;
+        return world == null ? null : world.getWorld();
     }
 
     public static int getX(@Nullable BlockPosition blockPosition) {
-        return blockPosition != null ? blockPosition.getX() : 0;
+        return blockPosition == null ? 0 : blockPosition.getX();
     }
 
     public static int getY(@Nullable BlockPosition blockPosition) {
-        return blockPosition != null ? blockPosition.getY() : 0;
+        return blockPosition == null ? 0 : blockPosition.getY();
     }
 
     public static int getZ(@Nullable BlockPosition blockPosition) {
-        return blockPosition != null ? blockPosition.getZ() : 0;
+        return blockPosition == null ? 0 : blockPosition.getZ();
     }
 
     public static double getX(@Nullable Vec3D vec) {
-        return vec != null ? vec.x : 0;
+        return vec == null ? 0 : vec.x;
     }
 
     public static double getY(@Nullable Vec3D vec) {
-        return vec != null ? vec.y : 0;
+        return vec == null ? 0 : vec.y;
     }
 
     public static double getZ(@Nullable Vec3D vec) {
-        return vec != null ? vec.z : 0;
+        return vec == null ? 0 : vec.z;
     }
 
     @Nullable

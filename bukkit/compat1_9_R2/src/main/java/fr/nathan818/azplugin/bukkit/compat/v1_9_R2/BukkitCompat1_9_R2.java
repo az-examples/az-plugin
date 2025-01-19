@@ -209,8 +209,8 @@ public class BukkitCompat1_9_R2 implements BukkitCompat {
     @Override
     public @Nullable NotchianNbtTagCompound getItemStackTag(@Nullable ItemStack itemStack) {
         net.minecraft.server.v1_9_R2.ItemStack nmsItemStack = asNMSItemStack(itemStack);
-        NBTTagCompound nmsTag = (nmsItemStack != null) ? nmsItemStack.getTag() : null;
-        return nmsTag != null ? new NotchianNbtTagCompound1_9_R2(nmsTag) : null;
+        NBTTagCompound nmsTag = (nmsItemStack == null) ? null : nmsItemStack.getTag();
+        return nmsTag == null ? null : new NotchianNbtTagCompound1_9_R2(nmsTag);
     }
 
     @Override
@@ -255,7 +255,7 @@ public class BukkitCompat1_9_R2 implements BukkitCompat {
     @Override
     public @Nullable NotchianNbtTagCompound readNotchianNbtTagCompound(@NotNull AZPacketBuffer buf) {
         NBTTagCompound nmsTag = readFromNMSPacketBuffer(buf, PacketDataSerializer::j);
-        return nmsTag != null ? new NotchianNbtTagCompound1_9_R2(nmsTag) : null;
+        return nmsTag == null ? null : new NotchianNbtTagCompound1_9_R2(nmsTag);
     }
 
     @Override

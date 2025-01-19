@@ -51,7 +51,7 @@ final class EntityMetaNameTag extends EntityMeta<AZNameTag, PactifyTagMetadata, 
     }
 
     private static float convertFloat(@Nullable Float value) {
-        return value != null ? value : -1.0F;
+        return value == null ? -1.0F : value;
     }
 
     private static PactifyTagMetadata.Rarity convertNameTagRarity(@Nullable Rarity rarity) {

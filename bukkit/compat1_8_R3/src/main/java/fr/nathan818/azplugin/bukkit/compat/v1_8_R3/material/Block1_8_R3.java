@@ -269,7 +269,7 @@ public abstract class Block1_8_R3 extends Block {
             hitY,
             hitZ,
             itemData,
-            (placer != null) ? placer.getBukkitEntity() : null
+            (placer == null) ? null : placer.getBukkitEntity()
         );
         if (ret != DEFAULT_BLOCK_STATE) {
             return Conversions1_8_R3.toNmsBlockState(ret);
