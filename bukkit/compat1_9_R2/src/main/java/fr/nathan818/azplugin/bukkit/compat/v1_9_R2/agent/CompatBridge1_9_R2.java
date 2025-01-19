@@ -1,11 +1,15 @@
 package fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent;
 
 import com.google.common.base.Function;
+import java.util.Map;
 import net.minecraft.server.v1_9_R2.EntityPlayer;
 import net.minecraft.server.v1_9_R2.ItemStack;
+import net.minecraft.server.v1_9_R2.NBTBase;
+import net.minecraft.server.v1_9_R2.NBTTagCompound;
 import net.minecraft.server.v1_9_R2.PacketDataSerializer;
 import org.bukkit.craftbukkit.v1_9_R2.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_9_R2.inventory.CraftItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +21,14 @@ public class CompatBridge1_9_R2 {
     public static RewriteItemStackFunction rewriteItemStackInFunction = RewriteItemStackFunction.DEFAULT;
 
     public static ItemStack getItemStackHandle(CraftItemStack itemStack) {
+        throw new UnsupportedOperationException(); // implemented by BukkitAgentCompat1_9_R2
+    }
+
+    public static Map<String, NBTBase> getMetaItemUnhandledTags(ItemMeta itemMeta) {
+        throw new UnsupportedOperationException(); // implemented by BukkitAgentCompat1_9_R2
+    }
+
+    public static Map<String, NBTBase> getNbtCompoundMap(NBTTagCompound compound) {
         throw new UnsupportedOperationException(); // implemented by BukkitAgentCompat1_9_R2
     }
 

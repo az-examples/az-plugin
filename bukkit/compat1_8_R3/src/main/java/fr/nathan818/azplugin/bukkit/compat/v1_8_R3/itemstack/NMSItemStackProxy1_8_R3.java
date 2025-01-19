@@ -1,20 +1,21 @@
-package fr.nathan818.azplugin.bukkit.compat.v1_9_R2;
+package fr.nathan818.azplugin.bukkit.compat.v1_8_R3.itemstack;
 
-import fr.nathan818.azplugin.bukkit.compat.proxy.ItemStackProxy;
-import fr.nathan818.azplugin.bukkit.compat.proxy.NbtCompoundProxy;
+import fr.nathan818.azplugin.bukkit.item.ItemStackProxy;
+import fr.nathan818.azplugin.bukkit.item.NbtCompoundProxy;
 import lombok.NonNull;
-import net.minecraft.server.v1_9_R2.Item;
-import net.minecraft.server.v1_9_R2.ItemStack;
-import net.minecraft.server.v1_9_R2.NBTTagCompound;
+import net.minecraft.server.v1_8_R3.Item;
+import net.minecraft.server.v1_8_R3.ItemStack;
+import net.minecraft.server.v1_8_R3.NBTTagCompound;
+import org.bukkit.craftbukkit.v1_8_R3.inventory.CraftItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ItemStackProxy1_9_R2 implements ItemStackProxy {
+public class NMSItemStackProxy1_8_R3 implements ItemStackProxy {
 
     private ItemStack handle;
     private boolean copied;
 
-    public ItemStackProxy1_9_R2(@NonNull ItemStack handle, boolean copyOnWrite) {
+    public NMSItemStackProxy1_8_R3(@NonNull ItemStack handle, boolean copyOnWrite) {
         this.handle = handle;
         this.copied = !copyOnWrite;
     }
@@ -37,8 +38,8 @@ public class ItemStackProxy1_9_R2 implements ItemStackProxy {
     }
 
     @Override
-    public void setTypeId(int type) {
-        getForWrite().setItem(Item.getById(type));
+    public void setTypeId(int typeId) {
+        getForWrite().setItem(Item.getById(typeId));
     }
 
     @Override
@@ -64,7 +65,7 @@ public class ItemStackProxy1_9_R2 implements ItemStackProxy {
     @Override
     public @Nullable NbtCompoundProxy getTagForRead() {
         NBTTagCompound tag = getForRead().getTag();
-        return (tag == null) ? null : new NbtCompoundProxy1_9_R2(tag, true);
+        return (tag == null) ? null : new NbtCompoundProxy1_8_R3(tag, true);
     }
 
     @Override
@@ -75,7 +76,7 @@ public class ItemStackProxy1_9_R2 implements ItemStackProxy {
             tag = new NBTTagCompound();
             handle.setTag(tag);
         }
-        return new NbtCompoundProxy1_9_R2(tag, false);
+        return new NbtCompoundProxy1_8_R3(tag, false);
     }
 
     @Override
@@ -85,6 +86,11 @@ public class ItemStackProxy1_9_R2 implements ItemStackProxy {
         }
         getForWrite().setTag(null);
         return true;
+    }
+
+    @Override
+    public @NotNull org.bukkit.inventory.ItemStack asItemStack() {
+        return CraftItemStack.asCraftMirror(getForRead());
     }
 
     @Override

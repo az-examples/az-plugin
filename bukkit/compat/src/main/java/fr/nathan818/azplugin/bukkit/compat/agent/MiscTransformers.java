@@ -8,13 +8,44 @@ import static fr.nathan818.azplugin.common.utils.asm.AZClassWriter.addInfo;
 import fr.nathan818.azplugin.common.utils.agent.Agent;
 import fr.nathan818.azplugin.common.utils.asm.AZClassVisitor;
 import fr.nathan818.azplugin.common.utils.asm.AZGeneratorAdapter;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-public class CraftBukkitTransformers {
+public class MiscTransformers {
 
     public static void registerGetItemStackHandle(Agent agent, String compatBridgeClass, String craftItemStackClass) {
+        registerFieldGetter(agent, compatBridgeClass, "getItemStackHandle", null, craftItemStackClass, "handle");
+    }
+
+    public static void registerGetMetaItemUnhandledTags(
+        Agent agent,
+        String compatBridgeClass,
+        String craftMetaItemClass
+    ) {
+        registerFieldGetter(
+            agent,
+            compatBridgeClass,
+            "getMetaItemUnhandledTags",
+            "org/bukkit/inventory/meta/ItemMeta",
+            craftMetaItemClass,
+            "unhandledTags"
+        );
+    }
+
+    public static void registerGetNbtCompoundMap(Agent agent, String compatBridgeClass, String nmsNbtCompoundClass) {
+        registerFieldGetter(agent, compatBridgeClass, "getNbtCompoundMap", null, nmsNbtCompoundClass, "map");
+    }
+
+    private static void registerFieldGetter(
+        Agent agent,
+        String compatBridgeClass,
+        String getterName,
+        @Nullable String interfaceClass,
+        String holderClass,
+        String fieldName
+    ) {
         agent.addTransformer(compatBridgeClass, (api, cv) ->
             new AZClassVisitor(api, cv) {
                 @Override
@@ -25,23 +56,26 @@ public class CraftBukkitTransformers {
                     String signature,
                     String[] exceptions
                 ) {
-                    if ("getItemStackHandle".equals(name)) {
+                    if (name.equals(getterName)) {
                         // public static nms.ItemStack getItemStackHandle(CraftItemStack stack) {
                         //   return stack.handle;
                         // }
                         AZGeneratorAdapter mg = generateMethod(cv, access, name, descriptor, signature, exceptions);
                         mg.loadArg(0);
-                        mg.getField(mg.getArgumentTypes()[0], "handle", mg.getReturnType());
+                        if (interfaceClass != null) {
+                            mg.checkCast(t(interfaceClass));
+                        }
+                        mg.getField(mg.getArgumentTypes()[0], fieldName, mg.getReturnType());
                         mg.returnValue();
                         mg.endMethod();
-                        addInfo(cv, getClassName(), "Defined getItemStackHandle method");
+                        addInfo(cv, getClassName(), "Defined {0} method", name);
                         return null;
                     }
                     return super.visitMethod(access, name, descriptor, signature, exceptions);
                 }
             }
         );
-        agent.addTransformer(craftItemStackClass, (api, cv) ->
+        agent.addTransformer(holderClass, (api, cv) ->
             new AZClassVisitor(api, cv) {
                 @Override
                 public FieldVisitor visitField(
@@ -51,10 +85,10 @@ public class CraftBukkitTransformers {
                     String signature,
                     Object value
                 ) {
-                    if ("handle".equals(name)) {
+                    if (name.equals(fieldName)) {
                         // Make the "handle" field public
                         access = (access & ~Opcodes.ACC_PRIVATE) | Opcodes.ACC_PUBLIC;
-                        addInfo(cv, getClassName(), "Changed handle field access to public");
+                        addInfo(cv, getClassName(), "Changed {0} field access to public", fieldName);
                     }
                     return super.visitField(access, name, descriptor, signature, value);
                 }

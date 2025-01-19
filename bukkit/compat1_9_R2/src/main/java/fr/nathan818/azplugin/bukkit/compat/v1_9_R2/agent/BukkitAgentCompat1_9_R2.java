@@ -1,22 +1,27 @@
 package fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent;
 
 import static fr.nathan818.azplugin.bukkit.compat.agent.ChatPacketTransformers.registerChatPacketTransformer;
-import static fr.nathan818.azplugin.bukkit.compat.agent.CraftBukkitTransformers.registerCraftField;
-import static fr.nathan818.azplugin.bukkit.compat.agent.CraftBukkitTransformers.registerGetItemStackHandle;
 import static fr.nathan818.azplugin.bukkit.compat.agent.EntityScaleTransformers.registerEntityScaleTransformer;
+import static fr.nathan818.azplugin.bukkit.compat.agent.MiscTransformers.registerCraftField;
+import static fr.nathan818.azplugin.bukkit.compat.agent.MiscTransformers.registerGetItemStackHandle;
+import static fr.nathan818.azplugin.bukkit.compat.agent.MiscTransformers.registerGetMetaItemUnhandledTags;
+import static fr.nathan818.azplugin.bukkit.compat.agent.MiscTransformers.registerGetNbtCompoundMap;
 import static fr.nathan818.azplugin.bukkit.compat.agent.NMSMaterialTransformers.registerNMSMaterialTransformer;
-import static fr.nathan818.azplugin.bukkit.compat.agent.PlayerWindowIdTransformers.registerWindowIdTransformers;
+import static fr.nathan818.azplugin.bukkit.compat.agent.PacketRewriteTransformers.registerPacketRewriteTransformer;
+import static fr.nathan818.azplugin.bukkit.compat.agent.PlayerWindowIdTransformers.registerPlayerWindowIdTransformer;
 import static fr.nathan818.azplugin.bukkit.compat.material.NMSMaterialDefinitions.ARMOR_MATERIALS;
 import static fr.nathan818.azplugin.bukkit.compat.material.NMSMaterialDefinitions.TOOL_MATERIALS;
 import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.CompatBridge1_9_R2;
 import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.CraftEntity1_9_R2;
 import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.CraftItemStack1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.CraftMetaItem1_9_R2;
 import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.Entity1_9_R2;
 import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.EntityPlayer1_9_R2;
 import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.EnumArmorMaterial1_9_R2;
 import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.EnumToolMaterial1_9_R2;
 import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.ItemAxe1_9_R2;
 import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.ItemStack1_9_R2;
+import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.NBTTagCompound1_9_R2;
 import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.PacketDataSerializer1_9_R2;
 import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.PacketDecoder1_9_R2;
 import static fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.Dictionary1_9_R2.PacketEncoder1_9_R2;
@@ -27,7 +32,6 @@ import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.t;
 import static org.objectweb.asm.Type.FLOAT_TYPE;
 import static org.objectweb.asm.Type.INT_TYPE;
 
-import fr.nathan818.azplugin.bukkit.compat.agent.PacketRewriteTransformers;
 import fr.nathan818.azplugin.bukkit.compat.material.NMSArmorMaterialDefinition;
 import fr.nathan818.azplugin.bukkit.compat.material.NMSToolMaterialDefinition;
 import fr.nathan818.azplugin.common.utils.agent.Agent;
@@ -44,6 +48,8 @@ public class BukkitAgentCompat1_9_R2 {
 
     public static void register(Agent agent) {
         registerGetItemStackHandle(agent, CompatBridge1_9_R2, CraftItemStack1_9_R2);
+        registerGetMetaItemUnhandledTags(agent, CompatBridge1_9_R2, CraftMetaItem1_9_R2);
+        registerGetNbtCompoundMap(agent, CompatBridge1_9_R2, NBTTagCompound1_9_R2);
         registerCraftField(agent, CompatBridge1_9_R2, "getAZEntity", "setAZEntity", CraftEntity1_9_R2, "azEntity");
         registerChatPacketTransformer(agent, PacketPlayInChat1_9_R2, 100, 3, 3);
         registerNMSMaterialTransformer(
@@ -67,11 +73,11 @@ public class BukkitAgentCompat1_9_R2 {
             opts.nmsEntityClass(Entity1_9_R2);
             opts.craftEntityClass(CraftEntity1_9_R2);
         });
-        registerWindowIdTransformers(agent, opts -> {
+        registerPlayerWindowIdTransformer(agent, opts -> {
             opts.compatBridgeClass(CompatBridge1_9_R2);
             opts.nmsEntityPlayerClass(EntityPlayer1_9_R2);
         });
-        PacketRewriteTransformers.register(agent, opts -> {
+        registerPacketRewriteTransformer(agent, opts -> {
             opts.compatBridgeClass(CompatBridge1_9_R2);
             opts.nmsPacketDataSerializerClass(PacketDataSerializer1_9_R2);
             opts.writeItemStackMethod("a");

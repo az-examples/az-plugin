@@ -1,5 +1,6 @@
 package fr.nathan818.azplugin.bukkit.compat.agent;
 
+import static fr.nathan818.azplugin.bukkit.compat.agent.BukkitMaterialTransformers.registerBukkitMaterialTransformer;
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.NO_ARGS;
 import static fr.nathan818.azplugin.common.utils.asm.ASMUtil.t;
 import static org.objectweb.asm.Type.BOOLEAN_TYPE;
@@ -27,7 +28,7 @@ public class BukkitAgentCompat {
 
     public static void register(Agent agent) {
         agent.addClassToPreload(COMPAT_BRIDGE);
-        BukkitMaterialTransformers.register(agent);
+        registerBukkitMaterialTransformer(agent);
     }
 
     public static void invokeCompatBridge(AZGeneratorAdapter mg, Method method) {

@@ -14,9 +14,12 @@ import fr.nathan818.azplugin.bukkit.compat.network.PlayerConnection;
 import fr.nathan818.azplugin.bukkit.compat.util.CompatAlerts;
 import fr.nathan818.azplugin.bukkit.compat.util.NetworkUtil;
 import fr.nathan818.azplugin.bukkit.compat.v1_8_R3.agent.CompatBridge1_8_R3;
+import fr.nathan818.azplugin.bukkit.compat.v1_8_R3.itemstack.BukkitItemStackProxy1_8_R3;
+import fr.nathan818.azplugin.bukkit.compat.v1_8_R3.itemstack.NMSItemStackProxy1_8_R3;
 import fr.nathan818.azplugin.bukkit.compat.v1_8_R3.material.MaterialRegistry1_8_R3;
 import fr.nathan818.azplugin.bukkit.entity.AZEntity;
 import fr.nathan818.azplugin.bukkit.entity.AZPlayer;
+import fr.nathan818.azplugin.bukkit.item.ItemStackProxy;
 import fr.nathan818.azplugin.common.network.AZNetworkContext;
 import fr.nathan818.azplugin.common.network.AZPacketBuffer;
 import fr.nathan818.azplugin.common.utils.java.CollectionsUtil;
@@ -152,7 +155,7 @@ public class BukkitCompat1_8_R3 implements BukkitCompat {
                 return null;
             }
             AZPlayer player = (nmsPlayer == null) ? null : az(nmsPlayer.getBukkitEntity());
-            ItemStackProxy1_8_R3 proxy = new ItemStackProxy1_8_R3(nmsItemStack, true);
+            NMSItemStackProxy1_8_R3 proxy = new NMSItemStackProxy1_8_R3(nmsItemStack, true);
             rewriter.rewriteItemStackOut(AZNetworkContext.of(player), proxy);
             return proxy.getForRead();
         };
@@ -161,7 +164,7 @@ public class BukkitCompat1_8_R3 implements BukkitCompat {
                 return null;
             }
             AZPlayer player = (nmsPlayer == null) ? null : az(nmsPlayer.getBukkitEntity());
-            ItemStackProxy1_8_R3 proxy = new ItemStackProxy1_8_R3(nmsItemStack, false);
+            NMSItemStackProxy1_8_R3 proxy = new NMSItemStackProxy1_8_R3(nmsItemStack, false);
             rewriter.rewriteItemStackIn(AZNetworkContext.of(player), proxy);
             return proxy.getForRead();
         };
@@ -176,8 +179,8 @@ public class BukkitCompat1_8_R3 implements BukkitCompat {
     }
 
     @Override
-    public @NotNull ItemStack asCraftCopy(@NotNull ItemStack item) {
-        return CraftItemStack.asCraftCopy(item);
+    public @Nullable ItemStack asCraftCopy(@Nullable ItemStack item) {
+        return item == null ? null : CraftItemStack.asCraftCopy(item);
     }
 
     @Override
@@ -201,10 +204,25 @@ public class BukkitCompat1_8_R3 implements BukkitCompat {
     }
 
     @Override
-    public @Nullable NotchianNbtTagCompound getItemStackTag(@NotNull ItemStack itemStack) {
+    public @Nullable NotchianNbtTagCompound getItemStackTag(@Nullable ItemStack itemStack) {
         net.minecraft.server.v1_8_R3.ItemStack nmsItemStack = asNMSItemStack(itemStack);
-        NBTTagCompound nmsTag = (nmsItemStack != null) ? nmsItemStack.getTag() : null;
-        return nmsTag != null ? new NotchianNbtTagCompound1_8_R3(nmsTag) : null;
+        NBTTagCompound nmsTag = (nmsItemStack == null) ? null : nmsItemStack.getTag();
+        return (nmsTag == null) ? null : new NotchianNbtTagCompound1_8_R3(nmsTag);
+    }
+
+    @Override
+    public @Nullable ItemStackProxy getItemStackProxy(@Nullable ItemStack itemStack, boolean copyOnWrite) {
+        if (itemStack == null) {
+            return null;
+        }
+        if (itemStack instanceof CraftItemStack) {
+            return new NMSItemStackProxy1_8_R3(
+                CompatBridge1_8_R3.getItemStackHandle((CraftItemStack) itemStack),
+                copyOnWrite
+            );
+        } else {
+            return new BukkitItemStackProxy1_8_R3(itemStack, copyOnWrite);
+        }
     }
 
     private @Nullable NBTTagCompound asNMSTagCompound(@Nullable NotchianNbtTagCompound tag) {
@@ -248,17 +266,13 @@ public class BukkitCompat1_8_R3 implements BukkitCompat {
     }
 
     @Override
-    public int getActiveContainerWindowId(@NotNull Player bukkitPlayer) {
-        EntityPlayer nmsPlayer = ((CraftPlayer) bukkitPlayer).getHandle();
-        return nmsPlayer.activeContainer.windowId;
-    }
-
-    @Override
-    public void closeInventoryServerSide(@NotNull Player bukkitPlayer) {
+    public int closeActiveContainerServerSide(@NotNull Player bukkitPlayer) {
         // EntityPlayer.closeInventory(), but without sending the packet
         EntityPlayer nmsPlayer = ((CraftPlayer) bukkitPlayer).getHandle();
+        int windowId = nmsPlayer.activeContainer.windowId;
         CraftEventFactory.handleInventoryCloseEvent(nmsPlayer);
         nmsPlayer.p();
+        return windowId;
     }
 
     @Override

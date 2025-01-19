@@ -19,7 +19,10 @@ import org.objectweb.asm.Opcodes;
 
 public class PlayerWindowIdTransformers {
 
-    public static void registerWindowIdTransformers(Agent agent, Consumer<? super Options.Builder> optionsConsumer) {
+    public static void registerPlayerWindowIdTransformer(
+        Agent agent,
+        Consumer<? super Options.Builder> optionsConsumer
+    ) {
         Options.Builder builder = Options.builder();
         optionsConsumer.accept(builder);
         Options opts = builder.build();

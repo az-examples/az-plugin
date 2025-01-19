@@ -11,6 +11,7 @@ import fr.nathan818.azplugin.bukkit.agent.Main;
 import fr.nathan818.azplugin.bukkit.compat.BukkitCompat;
 import fr.nathan818.azplugin.bukkit.entity.AZEntity;
 import fr.nathan818.azplugin.bukkit.item.AZBukkitItemStack;
+import fr.nathan818.azplugin.bukkit.item.ItemStackProxy;
 import fr.nathan818.azplugin.bukkit.plugin.entity.ClientManager;
 import fr.nathan818.azplugin.bukkit.plugin.entity.EntityManager;
 import fr.nathan818.azplugin.bukkit.plugin.material.MaterialManager;
@@ -19,8 +20,8 @@ import fr.nathan818.azplugin.common.network.AZPacketBuffer;
 import fr.nathan818.azplugin.common.utils.agent.AgentSupport;
 import java.io.Reader;
 import java.util.logging.Level;
+import lombok.NonNull;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +101,7 @@ public class AZPlugin extends JavaPlugin implements AZBukkitPlatform {
     }
 
     @Override
-    public @NotNull ItemStack asCraftCopy(@NotNull ItemStack item) {
+    public @Nullable ItemStack asCraftCopy(@Nullable ItemStack item) {
         return compat().asCraftCopy(item);
     }
 
@@ -118,34 +119,29 @@ public class AZPlugin extends JavaPlugin implements AZBukkitPlatform {
     }
 
     @Override
-    public @Nullable NotchianNbtTagCompound getItemStackTag(@NotNull ItemStack itemStack) {
+    public @Nullable NotchianNbtTagCompound getItemStackTag(@Nullable ItemStack itemStack) {
         return compat().getItemStackTag(itemStack);
     }
 
     @Override
-    public int getActiveContainerWindowId(@NotNull Player bukkitPlayer) {
-        return compat().getActiveContainerWindowId(bukkitPlayer);
+    public @Nullable ItemStackProxy getItemStackProxy(@Nullable ItemStack itemStack) {
+        return compat().getItemStackProxy(itemStack, false);
     }
 
     @Override
-    public void closeInventoryServerSide(@NotNull Player bukkitPlayer) {
-        compat().closeInventoryServerSide(bukkitPlayer);
-    }
-
-    @Override
-    public boolean isSync(@NotNull AZEntity target) {
+    public boolean isSync(@NonNull AZEntity target) {
         return Bukkit.isPrimaryThread();
     }
 
     @Override
-    public void assertSync(@NotNull AZEntity target, String method) {
+    public void assertSync(@NonNull AZEntity target, String method) {
         if (!isSync(target)) {
             throw new IllegalStateException("Method " + method + " must be called on the main thread");
         }
     }
 
     @Override
-    public void scheduleSync(@NotNull AZEntity target, @NotNull Runnable task) {
+    public void scheduleSync(@NonNull AZEntity target, @NotNull Runnable task) {
         Bukkit.getScheduler().scheduleSyncDelayedTask(this, task);
     }
 }

@@ -11,6 +11,7 @@ import fr.nathan818.azplugin.bukkit.compat.network.ItemStackRewriter;
 import fr.nathan818.azplugin.bukkit.compat.network.PlayerConnection;
 import fr.nathan818.azplugin.bukkit.compat.util.MathUtil;
 import fr.nathan818.azplugin.bukkit.entity.AZEntity;
+import fr.nathan818.azplugin.bukkit.item.ItemStackProxy;
 import fr.nathan818.azplugin.common.network.AZPacketBuffer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -19,6 +20,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import pactify.client.api.mcprotocol.model.NotchianNbtTagCompound;
@@ -76,16 +78,22 @@ public interface BukkitCompat {
         return null;
     }
 
-    @NotNull
-    default ItemStack asCraftCopy(@NotNull ItemStack item) {
-        return item.clone();
+    @Contract("null -> null; !null -> !null")
+    @Nullable
+    default ItemStack asCraftCopy(@Nullable ItemStack item) {
+        return item == null ? null : item.clone();
     }
 
     @Nullable
     ItemStack createItemStack(int itemId, int count, int damage, @Nullable NotchianNbtTagCompound tag);
 
+    @Contract("null -> null")
     @Nullable
-    NotchianNbtTagCompound getItemStackTag(@NotNull ItemStack itemStack);
+    NotchianNbtTagCompound getItemStackTag(@Nullable ItemStack itemStack);
+
+    @Contract("null, _ -> null; !null, _ -> !null")
+    @Nullable
+    ItemStackProxy getItemStackProxy(@Nullable ItemStack itemStack, boolean copyOnWrite);
 
     @Nullable
     ItemStack readItemStack(@NotNull AZPacketBuffer buf);
@@ -118,12 +126,8 @@ public interface BukkitCompat {
         return 100;
     }
 
-    default int getActiveContainerWindowId(@NotNull Player bukkitPlayer) {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    default void closeInventoryServerSide(@NotNull Player bukkitPlayer) {
-        throw new UnsupportedOperationException("Not implemented");
+    default int closeActiveContainerServerSide(@NotNull Player bukkitPlayer) {
+        return -1;
     }
 
     boolean isViewer(@NotNull Entity entity, @NotNull Player viewer);

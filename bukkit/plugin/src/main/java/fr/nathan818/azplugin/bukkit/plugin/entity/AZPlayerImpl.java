@@ -43,6 +43,7 @@ import org.bukkit.inventory.InventoryView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import pactify.client.api.plsp.packet.client.PLSPPacketAbstractCosmeticEquipment;
+import pactify.client.api.plsp.packet.client.PLSPPacketCloseContainer;
 import pactify.client.api.plsp.packet.client.PLSPPacketEntityCosmeticEquipment;
 import pactify.client.api.plsp.packet.client.PLSPPacketPlayerCosmeticEquipment;
 
@@ -263,6 +264,20 @@ public class AZPlayerImpl extends AZClientAbstract implements AZPlayer {
             bukkitPlayer.openInventory(inventory);
         } finally {
             compat().setNextWindowId(bukkitPlayer, 0);
+        }
+    }
+
+    @Override
+    public void closeInventory() {
+        Player bukkitPlayer = getBukkitPlayer();
+        int windowId;
+        if (
+            hasAZLauncher(PLSPPacketCloseContainer.SINCE_PROTOCOL_VERSION) &&
+            (windowId = compat().closeActiveContainerServerSide(bukkitPlayer)) != -1
+        ) {
+            sendPacket(new PLSPPacketCloseContainer(windowId));
+        } else {
+            bukkitPlayer.closeInventory();
         }
     }
 

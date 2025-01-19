@@ -1,4 +1,4 @@
-package fr.nathan818.azplugin.bukkit.compat.proxy;
+package fr.nathan818.azplugin.bukkit.item;
 
 import java.util.Collection;
 import org.jetbrains.annotations.Contract;

@@ -1,6 +1,7 @@
-package fr.nathan818.azplugin.bukkit.compat.proxy;
+package fr.nathan818.azplugin.bukkit.item;
 
 import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +12,7 @@ public interface ItemStackProxy {
         return Material.getMaterial(getTypeId());
     }
 
-    void setTypeId(int type);
+    void setTypeId(int typeId);
 
     default void setType(@Nullable Material type) {
         setTypeId(type == null ? 0 : type.getId());
@@ -32,4 +33,7 @@ public interface ItemStackProxy {
     NbtCompoundProxy getTagForWrite();
 
     boolean removeTag();
+
+    @NotNull
+    ItemStack asItemStack();
 }

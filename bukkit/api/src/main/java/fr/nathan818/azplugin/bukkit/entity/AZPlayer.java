@@ -1,6 +1,5 @@
 package fr.nathan818.azplugin.bukkit.entity;
 
-import fr.nathan818.azplugin.bukkit.AZBukkit;
 import fr.nathan818.azplugin.bukkit.chat.AZBungeeChatComponent;
 import fr.nathan818.azplugin.bukkit.item.AZBukkitItemStack;
 import fr.nathan818.azplugin.common.AZClient;
@@ -15,7 +14,6 @@ import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import pactify.client.api.plsp.packet.client.PLSPPacketCloseContainer;
 
 public interface AZPlayer extends AZClient, AZEntity {
     Player getBukkitPlayer();
@@ -56,16 +54,7 @@ public interface AZPlayer extends AZClient, AZEntity {
 
     void openMenuInventory(@NotNull InventoryView inventory);
 
-    default void closeInventory() {
-        Player bukkitPlayer = getBukkitPlayer();
-        if (hasAZLauncher(PLSPPacketCloseContainer.SINCE_PROTOCOL_VERSION)) {
-            int windowId = AZBukkit.platform().getActiveContainerWindowId(bukkitPlayer);
-            AZBukkit.platform().closeInventoryServerSide(bukkitPlayer);
-            sendPacket(new PLSPPacketCloseContainer(windowId));
-        } else {
-            bukkitPlayer.closeInventory();
-        }
-    }
+    void closeInventory();
 
     @Nullable
     AZNetworkValue<AZCosmeticEquipment> getCosmeticEquipment(@NotNull AZCosmeticEquipment.Slot slot);

@@ -1,6 +1,6 @@
 package fr.nathan818.azplugin.bukkit.compat.network;
 
-import fr.nathan818.azplugin.bukkit.compat.proxy.ItemStackProxy;
+import fr.nathan818.azplugin.bukkit.item.ItemStackProxy;
 import fr.nathan818.azplugin.common.network.AZNetworkContext;
 import org.jetbrains.annotations.NotNull;
 

@@ -1,7 +1,7 @@
 package fr.nathan818.azplugin.bukkit.compat.material;
 
-import fr.nathan818.azplugin.bukkit.compat.proxy.ItemStackProxy;
 import fr.nathan818.azplugin.bukkit.compat.type.ItemData;
+import fr.nathan818.azplugin.bukkit.item.ItemStackProxy;
 import fr.nathan818.azplugin.common.network.AZNetworkContext;
 import java.util.HashMap;
 import java.util.Map;

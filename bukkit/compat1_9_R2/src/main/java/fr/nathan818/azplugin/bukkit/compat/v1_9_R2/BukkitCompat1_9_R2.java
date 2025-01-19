@@ -14,9 +14,12 @@ import fr.nathan818.azplugin.bukkit.compat.network.PlayerConnection;
 import fr.nathan818.azplugin.bukkit.compat.util.CompatAlerts;
 import fr.nathan818.azplugin.bukkit.compat.util.NetworkUtil;
 import fr.nathan818.azplugin.bukkit.compat.v1_9_R2.agent.CompatBridge1_9_R2;
+import fr.nathan818.azplugin.bukkit.compat.v1_9_R2.itemstack.BukkitItemStackProxy1_9_R2;
+import fr.nathan818.azplugin.bukkit.compat.v1_9_R2.itemstack.NMSItemStackProxy1_9_R2;
 import fr.nathan818.azplugin.bukkit.compat.v1_9_R2.material.MaterialRegistry1_9_R2;
 import fr.nathan818.azplugin.bukkit.entity.AZEntity;
 import fr.nathan818.azplugin.bukkit.entity.AZPlayer;
+import fr.nathan818.azplugin.bukkit.item.ItemStackProxy;
 import fr.nathan818.azplugin.common.network.AZNetworkContext;
 import fr.nathan818.azplugin.common.network.AZPacketBuffer;
 import fr.nathan818.azplugin.common.utils.java.CollectionsUtil;
@@ -153,7 +156,7 @@ public class BukkitCompat1_9_R2 implements BukkitCompat {
                 return null;
             }
             AZPlayer player = (nmsPlayer == null) ? null : az(nmsPlayer.getBukkitEntity());
-            ItemStackProxy1_9_R2 proxy = new ItemStackProxy1_9_R2(nmsItemStack, true);
+            NMSItemStackProxy1_9_R2 proxy = new NMSItemStackProxy1_9_R2(nmsItemStack, true);
             rewriter.rewriteItemStackOut(AZNetworkContext.of(player), proxy);
             return proxy.getForRead();
         };
@@ -162,7 +165,7 @@ public class BukkitCompat1_9_R2 implements BukkitCompat {
                 return null;
             }
             AZPlayer player = (nmsPlayer == null) ? null : az(nmsPlayer.getBukkitEntity());
-            ItemStackProxy1_9_R2 proxy = new ItemStackProxy1_9_R2(nmsItemStack, false);
+            NMSItemStackProxy1_9_R2 proxy = new NMSItemStackProxy1_9_R2(nmsItemStack, false);
             rewriter.rewriteItemStackIn(AZNetworkContext.of(player), proxy);
             return proxy.getForRead();
         };
@@ -177,8 +180,8 @@ public class BukkitCompat1_9_R2 implements BukkitCompat {
     }
 
     @Override
-    public @NotNull ItemStack asCraftCopy(@NotNull ItemStack item) {
-        return CraftItemStack.asCraftCopy(item);
+    public @Nullable ItemStack asCraftCopy(@Nullable ItemStack item) {
+        return item == null ? null : CraftItemStack.asCraftCopy(item);
     }
 
     @Override
@@ -204,10 +207,25 @@ public class BukkitCompat1_9_R2 implements BukkitCompat {
     }
 
     @Override
-    public @Nullable NotchianNbtTagCompound getItemStackTag(@NotNull ItemStack itemStack) {
+    public @Nullable NotchianNbtTagCompound getItemStackTag(@Nullable ItemStack itemStack) {
         net.minecraft.server.v1_9_R2.ItemStack nmsItemStack = asNMSItemStack(itemStack);
         NBTTagCompound nmsTag = (nmsItemStack != null) ? nmsItemStack.getTag() : null;
         return nmsTag != null ? new NotchianNbtTagCompound1_9_R2(nmsTag) : null;
+    }
+
+    @Override
+    public @Nullable ItemStackProxy getItemStackProxy(@Nullable ItemStack itemStack, boolean copyOnWrite) {
+        if (itemStack == null) {
+            return null;
+        }
+        if (itemStack instanceof CraftItemStack) {
+            return new NMSItemStackProxy1_9_R2(
+                CompatBridge1_9_R2.getItemStackHandle((CraftItemStack) itemStack),
+                copyOnWrite
+            );
+        } else {
+            return new BukkitItemStackProxy1_9_R2(itemStack, copyOnWrite);
+        }
     }
 
     private @Nullable NBTTagCompound asNMSTagCompound(@Nullable NotchianNbtTagCompound tag) {
@@ -251,17 +269,13 @@ public class BukkitCompat1_9_R2 implements BukkitCompat {
     }
 
     @Override
-    public int getActiveContainerWindowId(@NotNull Player bukkitPlayer) {
-        EntityPlayer nmsPlayer = ((CraftPlayer) bukkitPlayer).getHandle();
-        return nmsPlayer.activeContainer.windowId;
-    }
-
-    @Override
-    public void closeInventoryServerSide(@NotNull Player bukkitPlayer) {
+    public int closeActiveContainerServerSide(@NotNull Player bukkitPlayer) {
         // EntityPlayer.closeInventory(), but without sending the packet
         EntityPlayer nmsPlayer = ((CraftPlayer) bukkitPlayer).getHandle();
+        int windowId = nmsPlayer.activeContainer.windowId;
         CraftEventFactory.handleInventoryCloseEvent(nmsPlayer);
         nmsPlayer.s();
+        return windowId;
     }
 
     @Override

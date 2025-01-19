@@ -22,7 +22,10 @@ import org.objectweb.asm.commons.Method;
 
 public class PacketRewriteTransformers {
 
-    public static void register(Agent agent, Consumer<? super Options.Builder> optionsConsumer) {
+    public static void registerPacketRewriteTransformer(
+        Agent agent,
+        Consumer<? super Options.Builder> optionsConsumer
+    ) {
         Options.Builder builder = Options.builder();
         optionsConsumer.accept(builder);
         Options opts = builder.build();

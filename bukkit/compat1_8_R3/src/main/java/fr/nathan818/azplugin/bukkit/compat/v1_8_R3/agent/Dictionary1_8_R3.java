@@ -7,6 +7,7 @@ public final class Dictionary1_8_R3 {
 
     public static final String CraftEntity1_8_R3 = "org/bukkit/craftbukkit/v1_8_R3/entity/CraftEntity";
     public static final String CraftItemStack1_8_R3 = "org/bukkit/craftbukkit/v1_8_R3/inventory/CraftItemStack";
+    public static final String CraftMetaItem1_8_R3 = "org/bukkit/craftbukkit/v1_8_R3/inventory/CraftMetaItem";
     public static final String CraftPlayer1_8_R3 = "org/bukkit/craftbukkit/v1_8_R3/entity/CraftPlayer";
 
     public static final String ChunkMap1_8_R3 = "net/minecraft/server/v1_8_R3/PacketPlayOutMapChunk$ChunkMap";
@@ -16,6 +17,7 @@ public final class Dictionary1_8_R3 {
     public static final String EnumArmorMaterial1_8_R3 = "net/minecraft/server/v1_8_R3/ItemArmor$EnumArmorMaterial";
     public static final String EnumToolMaterial1_8_R3 = "net/minecraft/server/v1_8_R3/Item$EnumToolMaterial";
     public static final String ItemStack1_8_R3 = "net/minecraft/server/v1_8_R3/ItemStack";
+    public static final String NBTTagCompound1_8_R3 = "net/minecraft/server/v1_8_R3/NBTTagCompound";
     public static final String Packet1_8_R3 = "net/minecraft/server/v1_8_R3/Packet";
     public static final String PacketDataSerializer1_8_R3 = "net/minecraft/server/v1_8_R3/PacketDataSerializer";
     public static final String PacketDecoder1_8_R3 = "net/minecraft/server/v1_8_R3/PacketDecoder";

@@ -32,7 +32,7 @@ public class BukkitMaterialTransformers {
         INT_TYPE // durability
     );
 
-    public static void register(Agent agent) {
+    public static void registerBukkitMaterialTransformer(Agent agent) {
         agent.addTransformer(
             BUKKIT_MATERIAL,
             AddEnumConstantTransformer::new,

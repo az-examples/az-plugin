@@ -7,6 +7,7 @@ public final class Dictionary1_9_R2 {
 
     public static final String CraftEntity1_9_R2 = "org/bukkit/craftbukkit/v1_9_R2/entity/CraftEntity";
     public static final String CraftItemStack1_9_R2 = "org/bukkit/craftbukkit/v1_9_R2/inventory/CraftItemStack";
+    public static final String CraftMetaItem1_9_R2 = "org/bukkit/craftbukkit/v1_9_R2/inventory/CraftMetaItem";
     public static final String CraftPlayer1_9_R2 = "org/bukkit/craftbukkit/v1_9_R2/entity/CraftPlayer";
 
     public static final String DamageSource1_9_R2 = "net/minecraft/server/v1_9_R2/DamageSource";
@@ -25,6 +26,7 @@ public final class Dictionary1_9_R2 {
     public static final String ItemAxe1_9_R2 = "net/minecraft/server/v1_9_R2/ItemAxe";
     public static final String ItemStack1_9_R2 = "net/minecraft/server/v1_9_R2/ItemStack";
     public static final String ItemSword1_9_R2 = "net/minecraft/server/v1_9_R2/ItemSword";
+    public static final String NBTTagCompound1_9_R2 = "net/minecraft/server/v1_9_R2/NBTTagCompound";
     public static final String PacketDataSerializer1_9_R2 = "net/minecraft/server/v1_9_R2/PacketDataSerializer";
     public static final String PacketDecoder1_9_R2 = "net/minecraft/server/v1_9_R2/PacketDecoder";
     public static final String PacketEncoder1_9_R2 = "net/minecraft/server/v1_9_R2/PacketEncoder";
