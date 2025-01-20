@@ -2,7 +2,6 @@ package fr.nathan818.azplugin.common;
 
 import static java.util.Objects.requireNonNull;
 
-import fr.nathan818.azplugin.common.network.AZPacketBuffer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,10 +48,4 @@ public interface AZAPI<Player, Client extends AZClient> {
             return "<getPlayerName() failed>";
         }
     }
-
-    @NotNull
-    AZPacketBuffer createHeapPacketBuffer(@Nullable AZClient client);
-
-    @NotNull
-    AZPacketBuffer createHeapPacketBuffer(@Nullable AZClient client, int initialCapacity);
 }

@@ -20,6 +20,7 @@ import fr.nathan818.azplugin.bukkit.compat.v1_8_R3.material.MaterialRegistry1_8_
 import fr.nathan818.azplugin.bukkit.entity.AZEntity;
 import fr.nathan818.azplugin.bukkit.entity.AZPlayer;
 import fr.nathan818.azplugin.bukkit.item.ItemStackProxy;
+import fr.nathan818.azplugin.common.AZ;
 import fr.nathan818.azplugin.common.network.AZNetworkContext;
 import fr.nathan818.azplugin.common.network.AZPacketBuffer;
 import fr.nathan818.azplugin.common.utils.java.CollectionsUtil;
@@ -232,7 +233,7 @@ public class BukkitCompat1_8_R3 implements BukkitCompat {
         if (tag instanceof NotchianNbtTagCompound1_8_R3) {
             return ((NotchianNbtTagCompound1_8_R3) tag).getHandle();
         }
-        try (AZPacketBuffer buf = az().createHeapPacketBuffer(null)) {
+        try (AZPacketBuffer buf = AZ.platform().createHeapPacketBuffer(null)) {
             tag.write(buf);
             return readFromNMSPacketBuffer(buf, PacketDataSerializer::h);
         }

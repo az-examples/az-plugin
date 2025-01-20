@@ -9,12 +9,14 @@ import fr.nathan818.azplugin.bukkit.AZBukkitAPI;
 import fr.nathan818.azplugin.bukkit.AZBukkitPlatform;
 import fr.nathan818.azplugin.bukkit.agent.Main;
 import fr.nathan818.azplugin.bukkit.compat.BukkitCompat;
+import fr.nathan818.azplugin.bukkit.compat.network.NettyPacketBuffer;
 import fr.nathan818.azplugin.bukkit.entity.AZEntity;
 import fr.nathan818.azplugin.bukkit.item.AZBukkitItemStack;
 import fr.nathan818.azplugin.bukkit.item.ItemStackProxy;
 import fr.nathan818.azplugin.bukkit.plugin.entity.ClientManager;
 import fr.nathan818.azplugin.bukkit.plugin.entity.EntityManager;
 import fr.nathan818.azplugin.bukkit.plugin.material.MaterialManager;
+import fr.nathan818.azplugin.common.AZClient;
 import fr.nathan818.azplugin.common.item.NotchianItemStackLike;
 import fr.nathan818.azplugin.common.network.AZPacketBuffer;
 import fr.nathan818.azplugin.common.utils.agent.AgentSupport;
@@ -83,6 +85,16 @@ public class AZPlugin extends JavaPlugin implements AZBukkitPlatform {
     @Override
     public @Nullable Object parseJson(@NotNull Reader reader) {
         return gson.fromJson(reader, Object.class);
+    }
+
+    @Override
+    public @NotNull AZPacketBuffer createHeapPacketBuffer(@Nullable AZClient client) {
+        return NettyPacketBuffer.create(client);
+    }
+
+    @Override
+    public @NotNull AZPacketBuffer createHeapPacketBuffer(@Nullable AZClient client, int initialCapacity) {
+        return NettyPacketBuffer.create(client, initialCapacity);
     }
 
     @Override

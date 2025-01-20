@@ -29,6 +29,12 @@ public interface AZPlatform<Player, Client extends AZClient> {
         throw new UnsupportedOperationException("Platform does not support parsing JSON");
     }
 
+    @NotNull
+    AZPacketBuffer createHeapPacketBuffer(@Nullable AZClient client);
+
+    @NotNull
+    AZPacketBuffer createHeapPacketBuffer(@Nullable AZClient client, int initialCapacity);
+
     default NotchianChatComponent readNotchianChatComponent(@NotNull AZPacketBuffer buf) {
         return SimpleNotchianChatComponent.read(buf);
     }

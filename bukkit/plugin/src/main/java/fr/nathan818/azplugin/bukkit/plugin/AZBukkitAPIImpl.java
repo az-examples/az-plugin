@@ -4,12 +4,9 @@ import static fr.nathan818.azplugin.bukkit.compat.BukkitCompat.compat;
 import static java.util.Objects.requireNonNull;
 
 import fr.nathan818.azplugin.bukkit.AZBukkitAPI;
-import fr.nathan818.azplugin.bukkit.compat.network.NettyPacketBuffer;
 import fr.nathan818.azplugin.bukkit.entity.AZEntity;
 import fr.nathan818.azplugin.bukkit.plugin.entity.AZEntityImpl;
 import fr.nathan818.azplugin.bukkit.plugin.entity.AZPlayerImpl;
-import fr.nathan818.azplugin.common.AZClient;
-import fr.nathan818.azplugin.common.network.AZPacketBuffer;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -48,16 +45,6 @@ public class AZBukkitAPIImpl implements AZBukkitAPI {
         } catch (Exception ex) {
             return "<getPlayerName() failed>";
         }
-    }
-
-    @Override
-    public @NotNull AZPacketBuffer createHeapPacketBuffer(@Nullable AZClient client) {
-        return NettyPacketBuffer.create(client);
-    }
-
-    @Override
-    public @NotNull AZPacketBuffer createHeapPacketBuffer(@Nullable AZClient client, int initialCapacity) {
-        return NettyPacketBuffer.create(client, initialCapacity);
     }
 
     @Override
