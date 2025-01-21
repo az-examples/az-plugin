@@ -157,7 +157,7 @@ public class AZPlayerImpl extends AZClientAbstract implements AZPlayer {
     }
 
     @Override
-    public void executeInNetworkThread(@NotNull Runnable task) {
+    public void executeInNetworkThread(@NonNull Runnable task) {
         PlayerConnection playerConnection = this.playerConnection;
         if (playerConnection != null) {
             try {
@@ -196,7 +196,7 @@ public class AZPlayerImpl extends AZClientAbstract implements AZPlayer {
     }
 
     @Override
-    public @NotNull <T> CompletableFuture<T> executeInNetworkThread(@NotNull Callable<? extends T> task) {
+    public @NotNull <T> CompletableFuture<T> executeInNetworkThread(@NonNull Callable<? extends T> task) {
         PlayerConnection playerConnection = this.playerConnection;
         if (playerConnection != null) {
             CompletableFuture<T> callback = new CompletableFuture<>();
@@ -285,7 +285,7 @@ public class AZPlayerImpl extends AZClientAbstract implements AZPlayer {
     protected void onConfFlagChanged(String key, boolean oldValue, boolean newValue) {
         changesSyncQueue.onChange(
             key,
-            k -> AZConstants.getDefaultConfFlag(k, getAZProtocolVersion()),
+            k -> AZConstants.getDefaultConfFlag(k, getAZProtocolVersion(), getMCProtocolVersion()),
             this::getConfFlag,
             (k, o, n) -> Bukkit.getPluginManager().callEvent(new AZPlayerConfFlagChangedEvent(this, k, n))
         );
@@ -295,7 +295,7 @@ public class AZPlayerImpl extends AZClientAbstract implements AZPlayer {
     protected void onConfIntChanged(String key, int oldValue, int newValue) {
         changesSyncQueue.onChange(
             key,
-            k -> AZConstants.getDefaultConfInt(k, getAZProtocolVersion()),
+            k -> AZConstants.getDefaultConfInt(k, getAZProtocolVersion(), getMCProtocolVersion()),
             this::getConfInt,
             (k, o, n) -> Bukkit.getPluginManager().callEvent(new AZPlayerConfIntChangedEvent(this, k, o, n))
         );

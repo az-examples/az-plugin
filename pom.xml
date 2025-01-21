@@ -24,6 +24,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
+    <delombok.outputDirectory>${project.build.directory}/delombok</delombok.outputDirectory>
+    <maven.javadoc.skip>true</maven.javadoc.skip>
 
     <!-- CI -->
     <build.number>X</build.number>
@@ -39,11 +41,14 @@
     <maven-deploy-plugin.version>3.1.3</maven-deploy-plugin.version>
     <maven-site-plugin.version>3.21.0</maven-site-plugin.version>
     <maven-project-info-reports-plugin.version>3.8.0</maven-project-info-reports-plugin.version>
+    <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
     <maven-shade-plugin.version>3.6.0</maven-shade-plugin.version>
 
     <!-- Dependencies versions -->
     <scriptus.version>0.5.0</scriptus.version>
     <lombok.version>1.18.36</lombok.version>
+    <lombok-maven-plugin.version>1.18.20.0</lombok-maven-plugin.version>
+    <enhanced-maven-source-plugin.version>3.3.1.0</enhanced-maven-source-plugin.version>
     <jetbrains-annotations.version>26.0.1</jetbrains-annotations.version>
     <asm.version>9.7.1</asm.version>
     <plsp-protocol.version>20250114</plsp-protocol.version>
@@ -188,6 +193,35 @@
           <version>${maven-project-info-reports-plugin.version}</version>
         </plugin>
         <plugin>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>${maven-javadoc-plugin.version}</version>
+          <configuration>
+            <sourcepath>${delombok.outputDirectory}</sourcepath>
+            <doclint>all,-missing,-reference</doclint>
+            <show>public</show>
+            <nohelp>true</nohelp>
+            <tags>
+              <tag>
+                <name>az.equivalent</name>
+                <placement>a</placement>
+                <head>Equivalent to:</head>
+              </tag>
+              <tag>
+                <name>az.low-level</name>
+                <placement>cm</placement>
+                <head
+                >[LowLevel] &lt;i&gt;This is a low-level method. You probably want to use higher-level methods instead.&lt;/i&gt;</head>
+              </tag>
+              <tag>
+                <name>az.async-safe</name>
+                <placement>cm</placement>
+                <head
+                >[AsyncSafe] &lt;i&gt;The method is fully thread-safe and can safely be used in async threads.&lt;/i&gt;</head>
+              </tag>
+            </tags>
+          </configuration>
+        </plugin>
+        <plugin>
           <artifactId>maven-shade-plugin</artifactId>
           <version>${maven-shade-plugin.version}</version>
         </plugin>
@@ -197,6 +231,23 @@
           <groupId>net.md-5</groupId>
           <artifactId>scriptus</artifactId>
           <version>${scriptus.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.projectlombok</groupId>
+          <artifactId>lombok-maven-plugin</artifactId>
+          <version>${lombok-maven-plugin.version}</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>${lombok.version}</version>
+            </dependency>
+          </dependencies>
+        </plugin>
+        <plugin>
+          <groupId>fr.nathan818.maven.plugins</groupId>
+          <artifactId>enhanced-maven-source-plugin</artifactId>
+          <version>${enhanced-maven-source-plugin.version}</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -230,6 +281,45 @@
               <Implementation-Version>${describe}</Implementation-Version>
             </manifestEntries>
           </archive>
+        </configuration>
+      </plugin>
+
+      <!-- Delombok -->
+      <plugin>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok-maven-plugin</artifactId>
+        <configuration>
+          <sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
+          <outputDirectory>${delombok.outputDirectory}</outputDirectory>
+          <addOutputDirectory>false</addOutputDirectory>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>delombok</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Sources -->
+      <plugin>
+        <groupId>fr.nathan818.maven.plugins</groupId>
+        <artifactId>enhanced-maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <excludeDefaultSources>true</excludeDefaultSources>
+          <sources>
+            <source>${delombok.outputDirectory}</source>
+          </sources>
         </configuration>
       </plugin>
     </plugins>

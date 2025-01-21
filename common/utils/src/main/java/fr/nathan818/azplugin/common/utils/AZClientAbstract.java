@@ -49,12 +49,16 @@ public abstract class AZClientAbstract implements AZClient {
     protected volatile boolean closed;
 
     private final ClientMapValues<String, Boolean> confFlags = ClientMapValues.<String, Boolean>builder(this)
-        .getter((map, key) -> map.getOrDefault(key, getDefaultConfFlag(key, getAZProtocolVersion())))
+        .getter((map, key) ->
+            map.getOrDefault(key, getDefaultConfFlag(key, getAZProtocolVersion(), getMCProtocolVersion()))
+        )
         .packetFactory(PLSPPacketConfFlag::new)
         .listener(this::onConfFlagChanged)
         .build();
     private final ClientMapValues<String, Integer> confInts = ClientMapValues.<String, Integer>builder(this)
-        .getter((map, key) -> map.getOrDefault(key, getDefaultConfInt(key, getAZProtocolVersion())))
+        .getter((map, key) ->
+            map.getOrDefault(key, getDefaultConfInt(key, getAZProtocolVersion(), getMCProtocolVersion()))
+        )
         .packetFactory(PLSPPacketConfInt::new)
         .listener(this::onConfIntChanged)
         .build();
@@ -190,19 +194,19 @@ public abstract class AZClientAbstract implements AZClient {
     ) throws Exception;
 
     @Override
-    public boolean getConfFlag(String key) {
+    public boolean getConfFlag(@NotNull String key) {
         assertConfFlagExists(key);
         return confFlags.get(key);
     }
 
     @Override
-    public int getConfInt(String key) {
+    public int getConfInt(@NotNull String key) {
         assertConfIntExists(key);
         return confInts.get(key);
     }
 
     @Override
-    public boolean setConfFlag(String key, boolean value) {
+    public boolean setConfFlag(@NotNull String key, boolean value) {
         assertConfFlagExists(key);
         if (!isConfFlagSupported(key, getAZProtocolVersion())) {
             return false;
@@ -212,7 +216,7 @@ public abstract class AZClientAbstract implements AZClient {
     }
 
     @Override
-    public boolean setConfInt(String key, int value) {
+    public boolean setConfInt(@NotNull String key, int value) {
         assertConfIntExists(key);
         if (!isConfIntSupported(key, getAZProtocolVersion())) {
             return false;

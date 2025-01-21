@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
+// TODO: Javadoc: The vignette is the circular shadow around the player's screen, usually black or darkened.
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(builderClassName = "Builder", toBuilder = true)
 @Getter
